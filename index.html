@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -104,7 +105,7 @@ input,textarea,button,select { font-family:'Noto Sans KR',sans-serif; }
 .action-btn svg { width:16px; height:16px; flex-shrink:0; }
 
 /* ===== BOTTOM NAV ===== */
-.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(255,255,255,.97); backdrop-filter:blur(12px); border-top:1px solid var(--border); display:flex; z-index:100; padding:4px 0 6px; }
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(255,255,255,.97); backdrop-filter:blur(12px); border-top:1px solid var(--border); display:none; z-index:100; padding:4px 0 6px; }
 .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:8px; border:none; background:none; cursor:pointer; color:var(--text-secondary); font-size:10px; font-weight:700; transition:.15s; }
 .nav-btn.active { color:var(--primary); }
 .nav-btn svg { width:24px; height:24px; }
@@ -177,6 +178,7 @@ textarea.modal-textarea:focus { outline:none; border-color:var(--primary); }
 .story-progress-fill { height:100%; background:#fff; width:0%; transition:width 5s linear; }
 .story-viewer-header { display:flex; align-items:center; gap:10px; padding:8px 12px; }
 .story-viewer-avatar { width:36px; height:36px; border-radius:50%; border:2px solid #fff; overflow:hidden; background:var(--primary-soft); display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--primary); }
+.story-viewer-avatar img { width:100%; height:100%; object-fit:cover; }
 .story-viewer-name { color:#fff; font-weight:700; font-size:14px; flex:1; }
 .story-viewer-time { color:rgba(255,255,255,.7); font-size:12px; }
 .story-close-btn { color:#fff; background:none; border:none; font-size:24px; cursor:pointer; }
@@ -519,21 +521,23 @@ textarea.modal-textarea:focus { outline:none; border-color:var(--primary); }
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+// 최신 안정 버전의 SDK 가져오기
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, getDocs, addDoc, query, orderBy, where, onSnapshot, serverTimestamp, writeBatch
-} from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+// 요청한 Firebase 설정값
 const firebaseConfig = {
-  apiKey: "AIzaSyCNHv1HQTHASjWvrs1oqwGZv79MOP9FN24",
-  authDomain: "x-bank-7a170.firebaseapp.com",
-  projectId: "x-bank-7a170",
-  storageBucket: "x-bank-7a170.firebasestorage.app",
-  messagingSenderId: "487159069769",
-  appId: "1:487159069769:web:5539b0fe504bf51ceb1398",
-  measurementId: "G-CEHHCY0PVK"
+  apiKey: "AIzaSyDIffZz4ImYy9wlUujnirN4jk5ObYp7PNw",
+  authDomain: "miramira-9a34c.firebaseapp.com",
+  projectId: "miramira-9a34c",
+  storageBucket: "miramira-9a34c.firebasestorage.app",
+  messagingSenderId: "506476561553",
+  appId: "1:506476561553:web:8dbb3b232df753e5536b30"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -576,6 +580,7 @@ async function getCurrentUser() {
   return await findUser(id);
 }
 async function findUser(id) {
+  if(!id) return null;
   if(id==='admin') return await getAdminUser();
   const snap = await getDoc(doc(db,'users',id));
   return snap.exists() ? snap.data() : null;
@@ -611,7 +616,11 @@ let _cachedUser = null; // 로그인된 유저 캐시 (동기 접근용)
 function getCU() { return _cachedUser; }
 // 캐시 갱신 후 반환
 async function loadCurrentUser() {
-  const id = getCurrentUserId(); if(!id) { _cachedUser=null; return null; }
+  const id = getCurrentUserId(); 
+  if(!id) { 
+    _cachedUser = null; 
+    return null; 
+  }
   _cachedUser = await findUser(id);
   return _cachedUser;
 }
@@ -652,6 +661,7 @@ async function doRegister() {
 }
 function doLogout() {
   _currentUserId = null;
+  _cachedUser = null;
   localStorage.removeItem('mm_current');
   showScreen('auth');
   document.getElementById('bottom-nav').style.display='none';
@@ -660,7 +670,11 @@ function doLogout() {
 // =============== APP ===============
 async function enterApp() {
   await cleanStories();
-  const cu = await getCurrentUser();
+  const cu = await loadCurrentUser();
+  if(!cu) {
+    doLogout();
+    return;
+  }
   document.getElementById('topbar-username').textContent = cu ? cu.id : '';
   showScreen('main');
   document.getElementById('bottom-nav').style.display='flex';
@@ -685,6 +699,7 @@ async function renderFeed() {
   await cleanStories();
   await renderStories();
   const cu = await getCurrentUser();
+  if(!cu) return;
   let posts = (await getPosts()).filter(p=>!p.isDeleted);
   posts.sort((a,b) => {
     const at = a.createdAt?.seconds ? a.createdAt.seconds*1000 : a.createdAt;
@@ -702,6 +717,7 @@ async function renderFeed() {
 async function renderStories() {
   await cleanStories();
   const cu = await getCurrentUser();
+  if(!cu) return;
   const stories = await getStories();
   const container = document.getElementById('stories-container');
   const byUser = {};
@@ -828,7 +844,6 @@ function renderCommentsSection(post) {
   if(!cu) return '';
   const suspended = isSuspended(cu);
   const comments = post.comments||[];
-  const isAdmin = cu.isAdmin||cu.isSubAdmin;
   if(post.adminDeleted||post.isDeleted) return '';
 
   const commentsHTML = comments.map(c=>renderCommentHTML(post.id,c)).join('');
@@ -847,7 +862,6 @@ function renderCommentsSection(post) {
 function renderCommentHTML(postId, c) {
   const cu = getCU();
   if(!cu) return '';
-  const author = null; // 동기로는 pfp 못 가져옴 - 이니셜로 대체
   const initials = c.authorId.substring(0,2).toUpperCase();
   const isOwn = cu.id===c.authorId;
   const isAdmin = cu.isAdmin||cu.isSubAdmin;
@@ -1062,6 +1076,34 @@ function openUploadModal() {
   document.querySelector('#modal-post .modal-title').innerHTML = '게시물 작성 <button class="modal-close" onclick="closeModal(\'modal-post\')">×</button>';
   openModal('modal-upload-type');
 }
+function openPostModal() {
+  closeModal('modal-upload-type');
+  document.getElementById('post-text').value = '';
+  updateCharCount(document.getElementById('post-text'), 'post-char');
+  openModal('modal-post');
+}
+function openStoryModal() {
+  closeModal('modal-upload-type');
+  storyDataURL = null;
+  document.getElementById('story-file').value = '';
+  document.getElementById('story-preview').innerHTML = `
+    <div style="text-align:center;color:var(--text-secondary)">
+      <div style="font-size:36px;">📷</div>
+      <div style="font-size:13px;margin-top:6px;">클릭하여 사진 선택</div>
+    </div>`;
+  openModal('modal-story');
+}
+function previewStory(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    storyDataURL = e.target.result;
+    document.getElementById('story-preview').innerHTML = `
+      <img src="${storyDataURL}" style="width:100%;height:100%;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(file);
+}
 async function submitPost() {
   const cu = getCU();
   const text = document.getElementById('post-text').value.trim();
@@ -1101,14 +1143,21 @@ async function viewStory(uid) {
   const stories = (await getStories()).filter(s=>s.authorId===uid);
   if(!stories.length){showToast('스토리가 없습니다.');return;}
   svStories=stories; svCurrentIdx=0;
-  showStoryAt(0);
+  await showStoryAt(0);
   document.getElementById('story-viewer').classList.add('open');
 }
-function showStoryAt(idx) {
+async function showStoryAt(idx) {
   const s = svStories[idx];
+  const targetUser = await findUser(s.authorId);
   const initials = s.authorId.substring(0,2).toUpperCase();
   const sv = document.getElementById('sv-avatar');
-  sv.innerHTML = initials; // 동기로 pfp 접근 불가, 이니셜로 대체
+  
+  if (targetUser && targetUser.pfp) {
+    sv.innerHTML = `<img src="${targetUser.pfp}" alt="">`;
+  } else {
+    sv.innerHTML = initials;
+  }
+  
   document.getElementById('sv-name').textContent = s.authorId;
   document.getElementById('sv-time').textContent = formatDate(s.createdAt?.seconds ? s.createdAt.seconds*1000 : s.createdAt);
   document.getElementById('sv-img').src = s.image;
@@ -1187,7 +1236,7 @@ async function renderProfile(uid) {
   const isSelf = cu.id===uid;
   const isAdminViewing = cu.isAdmin||cu.isSubAdmin;
   const initials = uid.substring(0,2).toUpperCase();
-  const pfpHtml = u.pfp ? `<img src="${u.pfp}" alt="">` : initials;
+  const pfpHtml = u.pfp ? `<img src="${u.pfp}" alt="" id="profile-pfp-img">` : initials;
   const followers = u.followers||[];
   const following = u.following||[];
   const isFollowing = cu.following&&cu.following.includes(uid);
@@ -1224,7 +1273,7 @@ async function renderProfile(uid) {
     <div class="profile-header">
       <div class="profile-cover-row">
         <div class="profile-pic-wrap">
-          <div class="profile-pic">${pfpHtml}</div>
+          <div class="profile-pic" onclick="${isSelf?'openProfileEdit()':''}">${pfpHtml}</div>
           ${isSelf?`<div class="profile-pic-edit-hint">탭하여 변경</div>`:''}
         </div>
         <div class="profile-stats">
@@ -1436,13 +1485,11 @@ function getNotifs() { return JSON.parse(localStorage.getItem('mm_notifs_'+getCu
 function saveNotifs(n) { localStorage.setItem('mm_notifs_'+getCurrentUserId(), JSON.stringify(n)); }
 
 async function pushNotif(targetId, notif) {
-  // targetId: 받는 사람 아이디
   const key = 'mm_notifs_'+targetId;
   const list = JSON.parse(localStorage.getItem(key)||'[]');
   list.unshift({ ...notif, id:genId(), createdAt:Date.now(), unread:true });
   if(list.length>50) list.length=50;
   localStorage.setItem(key, JSON.stringify(list));
-  // 현재 로그인된 사람이 대상이면 뱃지 갱신
   if(targetId===getCurrentUserId()) updateNotifBadge();
 }
 
@@ -1461,7 +1508,6 @@ function toggleNotifPanel() {
 
 function renderNotifList() {
   const notifs = getNotifs();
-  // 읽음 처리
   const updated = notifs.map(n=>({...n,unread:false}));
   saveNotifs(updated);
   updateNotifBadge();
@@ -1490,6 +1536,7 @@ function closeNotifPanel() {
 // 알림 발송 헬퍼: 게시물 활동 시 호출
 async function notifyPostActivity(post, actionUserId, type) {
   const cu = await getCurrentUser();
+  if(!cu) return;
   const actionUser = await findUser(actionUserId);
   const postAuthor = post.authorId;
 
@@ -1599,15 +1646,25 @@ function storySkip(dir) {
 window.addEventListener('load', async ()=>{
   // 관리자 계정 초기화
   await getAdminUser();
+  
   // 데모 게시물 (Firestore에 없을 때)
   const existing = await getPosts();
   if(!existing.length) {
     const demoPost = { id:genId(), authorId:'admin', content:'MIRAMIRA에 오신 것을 환영합니다! 💜\n게시물을 올려 사람들과 소통해보세요.', createdAt:Date.now()-3600000, likes:[], dislikes:[], retweets:[], comments:[], browser:'Chrome', ip:'000.000' };
     await savePost(demoPost);
   }
+  
   const cur = localStorage.getItem('mm_current');
-  if(cur) { _currentUserId=cur; await enterApp(); updateNotifBadge(); }
-  else { showScreen('auth'); document.getElementById('bottom-nav').style.display='none'; }
+  if(cur) { 
+    _currentUserId = cur; 
+    await enterApp(); 
+    updateNotifBadge(); 
+  } else { 
+    // 로컬 스토리지에 로그인 세션이 존재하지 않는 경우
+    showScreen('auth'); 
+    document.getElementById('bottom-nav').style.display = 'none'; 
+  }
+  
   // 알림 패널 외부 클릭 시 닫기
   document.addEventListener('click', e=>{
     if(!e.target.closest('#notif-panel')&&!e.target.closest('#notif-btn')) closeNotifPanel();
@@ -1668,3 +1725,5 @@ window.removeBadge = removeBadge;
 </script>
 </body>
 </html>
+
+```
