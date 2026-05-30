@@ -759,8 +759,6 @@ async function doLogin(){
 
   if(!u){err.textContent='아이디 또는 비밀번호가 틀렸습니다.';return;}
   if(String(u.password)!==String(pw)){err.textContent='아이디 또는 비밀번호가 틀렸습니다.';return;}
-  // 승인 대기 계정 차단
-  if(u.pending){err.textContent='⏳ 관리자 승인 대기 중입니다. 승인 후 로그인할 수 있습니다.';return;}
 
   CU=u; localStorage.setItem('mm_cur',id); err.textContent='';
   try{ await enterApp(); }
@@ -785,23 +783,12 @@ async function doRegister(){
     ]);
     if(fu && typeof fu.exists==='function' && fu.exists()){err.textContent='이미 사용 중인 아이디입니다.';return;}
   }catch(e){}
-  // pending:true — 관리자 승인 전까지 로그인 불가
-  const nu={id,password:pw,nickname:nick,bio:'',pfp:'',isAdmin:false,isSubAdmin:false,followers:[],following:[],suspended:null,notifs:[],pending:true};
+  const nu={id,password:pw,nickname:nick,bio:'',pfp:'',isAdmin:false,isSubAdmin:false,followers:[],following:[],suspended:null,notifs:[]};
   try{ await setU(nu); }catch(e){}
-  // 관리자에게 승인 알림
-  await pushN('admin','🆕',`<strong>${id}</strong>님이 가입 승인을 요청했습니다.`);
+  toast('회원가입 완료! 로그인하세요.');
+  switchTab('login');
+  document.getElementById('li-id').value=id;
   err.textContent='';
-  document.getElementById('rg-id').value='';
-  document.getElementById('rg-pw').value='';
-  document.getElementById('rg-nick').value='';
-  // 안내 메시지 표시
-  document.getElementById('form-reg').innerHTML=`
-    <div style="text-align:center;padding:16px 0;display:flex;flex-direction:column;gap:10px;align-items:center;">
-      <div style="font-size:32px;">⏳</div>
-      <div style="font-weight:800;font-size:14px;color:var(--pd);">가입 신청 완료!</div>
-      <div style="font-size:12px;color:var(--ts);line-height:1.6;">관리자 승인 후 로그인할 수 있습니다.<br>승인될 때까지 잠시 기다려주세요.</div>
-      <button class="btn-p" style="width:100%;margin-top:4px;" onclick="switchTab('login')">로그인 화면으로</button>
-    </div>`;
 }
 function doLogout(){
   CU=null; localStorage.removeItem('mm_cur');
@@ -1676,22 +1663,7 @@ async function savePE(){
 // ===== ADMIN =====
 async function openAdmin(){
   const allUsers=await getAllUsers();
-  const pendingUsers=allUsers.filter(u=>u.pending);
-  const users=allUsers.filter(u=>!u.pending);
-
-  // 승인 대기 목록
-  const pendingRows=pendingUsers.length?pendingUsers.map(u=>`
-    <div class="uarow">
-      <div class="uainfo">
-        <div class="uaid">${esc(u.id)}</div>
-        <div class="uapw">활동명: ${esc(u.nickname)} · PW: ${esc(u.password)}</div>
-      </div>
-      <div style="display:flex;gap:5px;">
-        <button onclick="approveUser('${u.id}')" style="background:var(--s);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">✅ 승인</button>
-        <button onclick="rejectUser('${u.id}')" style="background:var(--d);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">❌ 거절</button>
-      </div>
-    </div>`).join(''):'<div style="font-size:11px;color:var(--ts);">대기 중인 신청 없음</div>';
-
+  const users=allUsers;
   const rows=users.map(u=>`
     <div class="uarow">
       <div class="uainfo">
@@ -1739,7 +1711,6 @@ async function openAdmin(){
         <div style="border-top:1px solid var(--b);padding-top:8px;">${adRows}</div>
       </div>
       <div class="acard"><div class="actitle">⚙️ 이용자 목록 (${users.length}명)</div>${rows||'<div style="font-size:11px;color:var(--ts);">가입자 없음</div>'}</div>
-      ${pendingUsers.length?`<div class="acard" style="border-color:#f59e0b;"><div class="actitle" style="color:#d97706;">⏳ 가입 승인 대기 (${pendingUsers.length}명)</div>${pendingRows}</div>`:''}
     </div>`;
   curAdType='text'; adBannerDataURL=null;
 }
@@ -1778,21 +1749,6 @@ async function submitAd(){
 }
 async function delAdAndRefresh(adId){
   await delAd(adId); toast('광고가 삭제되었습니다.'); await openAdmin();
-}
-async function approveUser(uid){
-  const u=await getU(uid); if(!u) return;
-  delete u.pending;
-  await setU(u);
-  await pushN(uid,'✅','가입이 승인되었습니다! 로그인할 수 있습니다.');
-  toast(`'${uid}' 승인 완료`);
-  await openAdmin();
-}
-async function rejectUser(uid){
-  if(!confirm(`'${uid}' 가입 신청을 거절하고 계정을 삭제할까요?`)) return;
-  try{ await withTimeout(deleteDoc(doc(db,'users',uid))); }catch(e){}
-  ls.saveUsers(ls.getUsers().filter(u=>u.id!==uid));
-  toast(`'${uid}' 가입 거절`);
-  await openAdmin();
 }
 async function setSubAdmin(uid,val){
   if(!CU.isAdmin){ toast('최고 관리자만 부관리자를 설정할 수 있습니다.'); return; }
@@ -1985,7 +1941,7 @@ Object.assign(window,{
   doSearch,scrollToPost,searchHashtag,
   renderProfile,doFollow,showFL,
   openPE,prevPfp,savePE,
-  openAdmin,setSubAdmin,approveUser,rejectUser,openSusMod,doSuspend,doDeleteAccount,
+  openAdmin,setSubAdmin,openSusMod,doSuspend,doDeleteAccount,
   submitAd,delAdAndRefresh,setAdType,prevAdBanner,
   openBadgeMod,saveBadge,removeBadge,
   showPInfo,
