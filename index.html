@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIRAMIRA</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--p:#7B5EA7;--pd:#5C3D8F;--pl:#A688D4;--pbg:#F3EEF9;--ps:#EDE5F7;--d:#EF4444;--s:#22C55E;--t:#1e1e2e;--ts:#6b6b8a;--b:#DDD6F3;--bg:#F8F5FC;--sh:0 1px 8px rgba(123,94,167,.09);--shl:0 4px 20px rgba(123,94,167,.15);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;font-size:13px;}
+input,textarea,button{font-family:'Noto Sans KR',sans-serif;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+#auth-screen{background:linear-gradient(160deg,var(--pbg) 0%,#fff 60%,var(--ps) 100%);align-items:center;justify-content:center;padding:16px;}
+.auth-box{width:100%;max-width:380px;}
+.logo-wrap{text-align:center;margin-bottom:18px;}
+.auth-tabs{display:flex;background:var(--ps);border-radius:10px;padding:3px;margin-bottom:12px;}
+.auth-tab{flex:1;padding:7px;text-align:center;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;color:var(--p);transition:.2s;}
+.auth-tab.active{background:var(--p);color:#fff;}
+.auth-form{display:none;flex-direction:column;gap:8px;}
+.auth-form.active{display:flex;}
+.ig{display:flex;flex-direction:column;gap:3px;}
+.ig label{font-size:11px;font-weight:700;color:var(--pd);letter-spacing:.3px;}
+.ig input{padding:8px 10px;border:1.5px solid var(--b);border-radius:8px;font-size:13px;transition:.2s;background:#fff;}
+.ig input:focus{outline:none;border-color:var(--p);}
+.btn-p{background:var(--p);color:#fff;border:none;padding:9px;border-radius:8px;font-weight:800;font-size:13px;cursor:pointer;transition:.2s;}
+.btn-p:hover{background:var(--pd);}
+.btn-o{background:none;border:1.5px solid var(--p);color:var(--p);padding:5px 10px;border-radius:7px;font-weight:700;font-size:11px;cursor:pointer;}
+.btn-do{background:none;border:1.5px solid var(--d);color:var(--d);padding:5px 10px;border-radius:7px;font-weight:700;font-size:11px;cursor:pointer;}
+.btn-f{background:var(--p);color:#fff;border:none;padding:5px 12px;border-radius:7px;font-weight:700;font-size:11px;cursor:pointer;}
+.btn-f.ing{background:#fff;color:var(--p);border:1.5px solid var(--p);}
+.btn-sec{background:var(--bg);color:var(--ts);border:none;padding:8px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;}
+.aerr{color:var(--d);font-size:11px;text-align:center;min-height:13px;}
+#main-screen{padding-bottom:56px;overflow-y:auto;}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;padding:6px 10px;}
+.topbar-right{display:flex;align-items:center;gap:2px;}
+.nb{position:relative;background:none;border:none;cursor:pointer;padding:4px;color:var(--ts);display:flex;align-items:center;}
+.nb svg{width:18px;height:18px;}
+.nbadge{position:absolute;top:1px;right:1px;width:6px;height:6px;background:var(--d);border-radius:50%;border:1.5px solid #fff;display:none;}
+.nbadge.on{display:block;}
+.npanel{display:none;position:fixed;top:42px;right:6px;width:280px;max-width:calc(100vw - 12px);background:#fff;border:1px solid var(--b);border-radius:11px;box-shadow:var(--shl);z-index:300;max-height:340px;overflow-y:auto;}
+.npanel.open{display:block;}
+.nphead{padding:8px 11px 5px;font-weight:800;font-size:11px;color:var(--pd);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--b);}
+.npclear{background:none;border:none;font-size:10px;color:var(--ts);cursor:pointer;font-weight:700;}
+.nitem{display:flex;gap:7px;padding:7px 11px;border-bottom:1px solid var(--b);cursor:pointer;}
+.nitem:last-child{border-bottom:none;}
+.nitem.unread{background:var(--ps);}
+.nitem-icon{font-size:14px;flex-shrink:0;}
+.nitem-body{flex:1;}
+.nitem-text{font-size:11px;line-height:1.3;color:var(--t);}
+.nitem-text strong{color:var(--pd);}
+.nitem-time{font-size:9px;color:var(--ts);margin-top:1px;}
+.sw{padding:7px 0 4px;overflow-x:auto;display:flex;gap:7px;padding-left:9px;scrollbar-width:none;}
+.sw::-webkit-scrollbar{display:none;}
+.si{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;}
+.sr{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--p),#C084FC);padding:2px;}
+.sav{width:100%;height:100%;border-radius:50%;border:2px solid #fff;background:var(--ps);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--p);overflow:hidden;}
+.sav img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.sname{font-size:9px;color:var(--ts);max-width:48px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sadd{width:44px;height:44px;border-radius:50%;background:var(--ps);border:2px dashed var(--pl);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:var(--p);}
+.feed{padding:4px 7px;display:flex;flex-direction:column;gap:5px;}
+.pc{background:#fff;border-radius:9px;padding:9px 10px;box-shadow:var(--sh);border:1px solid var(--b);}
+.pc.adel{border-color:#fca5a5;background:#fff5f5;}
+.ph{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.pav{width:30px;height:30px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:var(--p);cursor:pointer;flex-shrink:0;overflow:hidden;}
+.pav img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.pmeta{flex:1;}
+.puid{font-weight:700;font-size:12px;color:var(--pd);cursor:pointer;}
+.puid:hover{text-decoration:underline;}
+.pdate{font-size:9px;color:var(--ts);}
+.pmore{position:relative;}
+.mbtn{background:none;border:none;cursor:pointer;color:var(--ts);font-size:14px;padding:2px;border-radius:4px;}
+.mbtn:hover{background:var(--ps);}
+.dd{display:none;position:absolute;right:0;top:100%;background:#fff;border:1px solid var(--b);border-radius:8px;box-shadow:var(--shl);z-index:50;min-width:105px;overflow:hidden;}
+.dd.open{display:block;}
+.ddi{padding:6px 11px;font-size:11px;cursor:pointer;white-space:nowrap;}
+.ddi:hover{background:var(--ps);color:var(--p);}
+.ddi.danger{color:var(--d);}
+.pcont{font-size:12px;line-height:1.5;color:var(--t);margin-bottom:6px;white-space:pre-wrap;}
+.pcont.adel{color:var(--d);font-weight:700;font-size:11px;}
+.rtinfo{font-size:10px;color:var(--pl);margin-bottom:4px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;padding:3px 6px;background:var(--ps);border-radius:5px;}
+.pacts{display:flex;border-top:1px solid var(--b);margin-top:4px;padding-top:3px;}
+.abt{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;padding:3px 2px;border:none;background:none;cursor:pointer;font-size:10px;color:var(--ts);border-radius:4px;font-weight:600;}
+.abt:hover{background:var(--ps);color:var(--p);}
+.abt.lk{color:#E91E8C;}
+.abt.dk{color:var(--d);}
+.abt.rk{color:var(--p);}
+.cmsec{margin-top:6px;border-top:1px solid var(--b);padding-top:5px;display:flex;flex-direction:column;gap:4px;}
+.cc{background:var(--pbg);border-radius:6px;padding:5px 8px;}
+.ch{display:flex;align-items:center;gap:4px;margin-bottom:2px;}
+.cav{width:20px;height:20px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:var(--p);cursor:pointer;flex-shrink:0;overflow:hidden;}
+.cav img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.cuid{font-weight:700;font-size:10px;color:var(--pd);cursor:pointer;}
+.cuid:hover{text-decoration:underline;}
+.cdate{font-size:9px;color:var(--ts);margin-left:auto;}
+.ccont{font-size:11px;line-height:1.4;white-space:pre-wrap;}
+.cacts{display:flex;gap:3px;margin-top:2px;}
+.cabt{background:none;border:none;font-size:9px;color:var(--ts);cursor:pointer;display:flex;align-items:center;gap:1px;padding:1px 4px;border-radius:3px;font-weight:600;}
+.cabt:hover{background:rgba(123,94,167,.1);color:var(--p);}
+.cabt.lk{color:#E91E8C;}
+.cabt.dk{color:var(--d);}
+.cir{display:flex;gap:4px;align-items:flex-end;margin-top:4px;}
+.cinput{flex:1;padding:5px 7px;border:1.5px solid var(--b);border-radius:6px;font-size:11px;resize:none;min-height:26px;max-height:56px;}
+.cinput:focus{outline:none;border-color:var(--p);}
+.csub{background:var(--p);color:#fff;border:none;padding:4px 9px;border-radius:6px;font-weight:700;font-size:10px;cursor:pointer;}
+.tcbtn{background:none;border:none;color:var(--p);font-size:10px;font-weight:700;cursor:pointer;padding:1px 0;margin-top:0;}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-top:1px solid var(--b);display:flex;z-index:100;padding:2px 0 3px;}
+.nnbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px;border:none;background:none;cursor:pointer;color:var(--ts);font-size:8px;font-weight:700;}
+.nnbtn.active{color:var(--p);}
+.nnbtn svg{width:18px;height:18px;}
+.nnbtn.upbtn{background:var(--p);border-radius:10px;color:#fff;margin:2px 4px;}
+#search-screen{overflow-y:auto;}
+.shdr{padding:7px 9px;background:#fff;border-bottom:1px solid var(--b);position:sticky;top:0;z-index:10;}
+.siwrap{position:relative;}
+.siwrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--ts);width:13px;height:13px;}
+.sinput{width:100%;padding:7px 9px 7px 28px;border:1.5px solid var(--b);border-radius:8px;font-size:12px;background:var(--bg);}
+.sinput:focus{outline:none;border-color:var(--p);background:#fff;}
+.sres{padding:6px;}
+.stitle{font-size:10px;font-weight:800;color:var(--p);letter-spacing:.3px;margin:5px 0 3px;}
+.uri{display:flex;align-items:center;gap:7px;padding:7px;background:#fff;border-radius:8px;border:1px solid var(--b);cursor:pointer;margin-bottom:4px;}
+.uri:hover{border-color:var(--pl);}
+#profile-screen{overflow-y:auto;}
+.prfhdr{background:var(--p);padding:12px 11px 9px;color:#fff;}
+.prfrow{display:flex;align-items:flex-end;gap:10px;margin-bottom:6px;}
+.prfpic{width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;overflow:hidden;}
+.prfpic img{width:100%;height:100%;object-fit:cover;}
+.prfstats{display:flex;gap:12px;flex:1;justify-content:flex-end;}
+.prfstat{text-align:center;cursor:pointer;}
+.prfstat-n{font-size:15px;font-weight:800;}
+.prfstat-l{font-size:9px;opacity:.8;}
+.prfuid{font-size:14px;font-weight:800;}
+.prfnick{font-size:11px;opacity:.8;margin-top:1px;}
+.prfbio{font-size:11px;opacity:.75;margin-top:3px;line-height:1.35;}
+.prfacts{display:flex;gap:5px;padding:6px 9px;background:#fff;border-bottom:1px solid var(--b);flex-wrap:wrap;align-items:center;}
+.prfposts{padding:6px;}
+.susbadge{background:#fef2f2;border:1px solid #fca5a5;color:var(--d);padding:2px 5px;border-radius:5px;font-size:10px;font-weight:700;display:inline-block;margin-top:3px;}
+.ubadge{display:inline;font-size:11px;margin-left:2px;vertical-align:middle;}
+.stv{display:none;position:fixed;inset:0;background:#000;z-index:400;flex-direction:column;}
+.stv.open{display:flex;}
+.stpbars{display:flex;gap:3px;padding:7px 8px 4px;}
+.stpbar{flex:1;height:2px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden;}
+.stpfill{height:100%;background:#fff;width:0%;transition:width 5s linear;}
+.stvhdr{display:flex;align-items:center;gap:7px;padding:5px 8px;}
+.stvav{width:26px;height:26px;border-radius:50%;border:1.5px solid #fff;background:var(--ps);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--p);font-size:10px;overflow:hidden;}
+.stvav img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.stvname{color:#fff;font-weight:700;font-size:11px;flex:1;}
+.stvtime{color:rgba(255,255,255,.7);font-size:10px;}
+.stvcls{color:#fff;background:none;border:none;font-size:19px;cursor:pointer;padding:2px 5px;}
+.stimgwrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;user-select:none;}
+.stimgwrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;pointer-events:none;}
+.sttap{position:absolute;top:0;bottom:0;width:40%;z-index:10;cursor:pointer;}
+.sttap.left{left:0;}
+.sttap.right{right:0;}
+.moverlay{display:none;position:fixed;inset:0;background:rgba(30,20,50,.5);backdrop-filter:blur(3px);z-index:200;align-items:flex-end;justify-content:center;}
+.moverlay.center{align-items:center;padding:9px;}
+.moverlay.open{display:flex;}
+.mbox{background:#fff;border-radius:12px 12px 0 0;padding:13px 13px;width:100%;max-width:450px;max-height:85vh;overflow-y:auto;}
+.moverlay.center .mbox{border-radius:12px;}
+.mtitle{font-size:13px;font-weight:800;color:var(--pd);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.mcls{background:none;border:none;cursor:pointer;color:var(--ts);font-size:18px;line-height:1;padding:2px 5px;}
+.macts{display:flex;gap:6px;margin-top:10px;}
+.macts .btn-p{flex:1;}
+.uptbtns{display:flex;gap:7px;}
+.uptbtn{flex:1;padding:12px;border:1.5px solid var(--b);border-radius:9px;background:#fff;cursor:pointer;text-align:center;transition:.15s;}
+.uptbtn:hover{border-color:var(--p);background:var(--ps);}
+.uptbtn .icon{font-size:22px;margin-bottom:4px;}
+.uptbtn .lbl{font-weight:700;font-size:11px;color:var(--pd);}
+.mta{width:100%;padding:7px 9px;border:1.5px solid var(--b);border-radius:8px;font-size:12px;resize:none;min-height:70px;}
+.mta:focus{outline:none;border-color:var(--p);}
+.ccount{text-align:right;font-size:10px;color:var(--ts);margin-top:2px;}
+.ccount.warn{color:var(--d);}
+.asec{padding:6px 8px;}
+.acard{background:#fff;border-radius:9px;border:1.5px solid #fca5a5;padding:9px;margin-bottom:7px;}
+.actitle{font-size:11px;font-weight:800;color:var(--d);margin-bottom:7px;}
+.uarow{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b);}
+.uarow:last-child{border-bottom:none;}
+.uainfo{font-size:11px;}
+.uaid{font-weight:700;}
+.uapw{color:var(--ts);font-size:10px;}
+.tsw{position:relative;width:32px;height:17px;}
+.tsw input{opacity:0;width:0;height:0;}
+.tsl{position:absolute;inset:0;background:#ccc;border-radius:17px;cursor:pointer;transition:.2s;}
+.tsl:before{content:'';position:absolute;height:11px;width:11px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.tsw input:checked+.tsl{background:var(--p);}
+.tsw input:checked+.tsl:before{transform:translateX(15px);}
+.pirow{display:flex;flex-direction:column;gap:5px;}
+.piitem{background:var(--pbg);border-radius:7px;padding:6px 9px;}
+.pilabel{font-size:9px;font-weight:800;color:var(--p);letter-spacing:.3px;margin-bottom:2px;}
+.pival{font-size:11px;font-weight:600;color:var(--t);}
+.empty{text-align:center;padding:20px 12px;color:var(--ts);}
+.empty .icon{font-size:26px;margin-bottom:4px;}
+.empty p{font-size:11px;}
+.phdr{display:flex;align-items:center;gap:7px;padding:9px 11px;background:var(--p);color:#fff;}
+.phdr-t{font-weight:800;font-size:12px;}
+.bkbtn{background:none;border:none;color:#fff;font-size:17px;cursor:pointer;}
+.flist{padding:6px;}
+.fitem{display:flex;align-items:center;gap:7px;padding:7px;background:#fff;border-radius:8px;border:1px solid var(--b);cursor:pointer;margin-bottom:3px;}
+.fitem:hover{border-color:var(--pl);}
+.fiav{width:32px;height:32px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:var(--p);overflow:hidden;}
+.fiav img{width:100%;height:100%;object-fit:cover;}
+.toast{position:fixed;bottom:62px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--pd);color:#fff;padding:6px 13px;border-radius:8px;font-size:11px;font-weight:700;z-index:600;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.einput{width:100%;padding:6px 7px;border:1.5px solid var(--pl);border-radius:6px;font-size:11px;margin-top:2px;}
+.einput:focus{outline:none;border-color:var(--p);}
+.susp-opts{display:flex;flex-direction:column;gap:5px;}
+.susp-opt{padding:8px;border:1.5px solid var(--b);border-radius:7px;cursor:pointer;font-weight:600;font-size:11px;text-align:center;transition:.15s;}
+.susp-opt:hover{border-color:var(--d);color:var(--d);background:#fff5f5;}
+.susp-di{display:flex;gap:5px;align-items:center;}
+.susp-di input{flex:1;padding:7px;border:1.5px solid var(--b);border-radius:7px;font-size:11px;}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--b);border-top-color:var(--p);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.feed-tabs{display:flex;background:#fff;border-bottom:1.5px solid var(--b);position:sticky;top:42px;z-index:90;}
+.ftab{flex:1;padding:7px;border:none;background:none;font-weight:700;font-size:11px;color:var(--ts);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:.15s;}
+.ftab.active{color:var(--p);border-bottom-color:var(--p);}
+.qrt-block{background:var(--pbg);border:1px solid var(--b);border-radius:7px;padding:6px 8px;margin-top:4px;cursor:pointer;}
+.qrt-block:hover{background:var(--ps);}
+.qrt-author{font-size:10px;font-weight:700;color:var(--pd);margin-bottom:2px;}
+.qrt-content{font-size:10px;color:var(--ts);white-space:pre-wrap;line-height:1.35;}
+.mention{color:var(--p);font-weight:700;cursor:pointer;text-decoration:none;}
+.mention:hover{text-decoration:underline;}
+.hashtag{color:#0284c7;font-weight:700;cursor:pointer;text-decoration:none;}
+.hashtag:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-box">
+    <div class="logo-wrap">
+      <svg width="220" height="56" viewBox="0 0 370 80"><text x="8" y="60" font-family="'Nunito',sans-serif" font-weight="900" font-size="60" fill="#7B5EA7" letter-spacing="-2">MIRAMIRA</text><rect x="285" y="10" width="64" height="46" rx="7" fill="#7B5EA7"/><text x="317" y="31" font-family="'Nunito',sans-serif" font-weight="800" font-size="11" fill="white" text-anchor="middle">I LOVE</text><text x="317" y="46" font-family="'Nunito',sans-serif" font-weight="800" font-size="11" fill="white" text-anchor="middle">YOU</text><polygon points="305,56 317,70 329,56" fill="#7B5EA7"/></svg>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">로그인</div>
+      <div class="auth-tab" id="tab-reg" onclick="switchTab('reg')">회원가입</div>
+    </div>
+    <div class="auth-form active" id="form-login">
+      <div class="ig"><label>아이디</label><input id="li-id" type="text" placeholder="아이디 입력" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="ig"><label>비밀번호</label><input id="li-pw" type="password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="aerr" id="li-err"></div>
+      <button class="btn-p" onclick="doLogin()">로그인</button>
+    </div>
+    <div class="auth-form" id="form-reg">
+      <div class="ig"><label>아이디</label><input id="rg-id" type="text" placeholder="사용할 아이디 입력 (영문·숫자·_ 2~20자)"></div>
+      <div class="ig"><label>비밀번호</label><input id="rg-pw" type="password" placeholder="비밀번호 입력"></div>
+      <div class="ig"><label>가상국가 활동명</label><input id="rg-nick" type="text" placeholder="활동명 입력"></div>
+      <div class="aerr" id="rg-err"></div>
+      <button class="btn-p" onclick="doRegister()">회원가입</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main-screen" class="screen">
+  <div class="topbar">
+    <svg width="120" height="30" viewBox="0 0 370 80"><text x="8" y="60" font-family="'Nunito',sans-serif" font-weight="900" font-size="60" fill="#7B5EA7" letter-spacing="-2">MIRAMIRA</text><rect x="285" y="10" width="64" height="46" rx="7" fill="#7B5EA7"/><text x="317" y="31" font-family="'Nunito',sans-serif" font-weight="800" font-size="11" fill="white" text-anchor="middle">I LOVE</text><text x="317" y="46" font-family="'Nunito',sans-serif" font-weight="800" font-size="11" fill="white" text-anchor="middle">YOU</text><polygon points="305,56 317,70 329,56" fill="#7B5EA7"/></svg>
+    <div class="topbar-right">
+      <!-- 알림 버튼 (오른쪽 위 두번째) -->
+      <button class="nb" id="nbtn" onclick="toggleNP()" title="알림">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="nbadge" id="nbadge"></span>
+      </button>
+      <span style="font-size:11px;color:var(--pd);font-weight:700;padding:0 4px;" id="topbar-uid"></span>
+    </div>
+  </div>
+  <!-- 알림 패널 -->
+  <div class="npanel" id="npanel">
+    <div class="nphead">🔔 알림 <button class="npclear" onclick="clearNotifs()">모두 지우기</button></div>
+    <div id="nlist"></div>
+  </div>
+  <div class="sw" id="sw"></div>
+  <!-- 피드 탭 -->
+  <div class="feed-tabs">
+    <button class="ftab active" id="ftab-follow" onclick="switchFeedTab('follow')">팔로우</button>
+    <button class="ftab" id="ftab-all" onclick="switchFeedTab('all')">전체</button>
+  </div>
+  <div class="feed" id="feed"></div>
+</div>
+
+<!-- SEARCH -->
+<div id="search-screen" class="screen">
+  <div class="shdr">
+    <div class="siwrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="sinput" id="sinput" placeholder="게시물 또는 아이디 검색..." oninput="doSearch()">
+    </div>
+  </div>
+  <div class="sres" id="sres"><div class="empty"><div class="icon">🔍</div><p>검색어를 입력하세요</p></div></div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile-screen" class="screen">
+  <div id="prcontent"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav" id="bnav" style="display:none;">
+  <button class="nnbtn active" id="nav-home" onclick="navTo('main')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>홈
+  </button>
+  <button class="nnbtn upbtn" onclick="openUpload()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="nnbtn" id="nav-search" onclick="navTo('search')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색
+  </button>
+  <button class="nnbtn" id="nav-profile" onclick="navTo('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>프로필
+  </button>
+</div>
+
+<!-- MODALS -->
+<div class="moverlay" id="m-uptype">
+  <div class="mbox">
+    <div class="mtitle">업로드 <button class="mcls" onclick="CM('m-uptype')">×</button></div>
+    <div class="uptbtns">
+      <div class="uptbtn" onclick="openPostM()"><div class="icon">📝</div><div class="lbl">게시물</div><div style="font-size:10px;color:#aaa;margin-top:3px;">글 · 100자</div></div>
+      <div class="uptbtn" onclick="openStoryM()"><div class="icon">📷</div><div class="lbl">스토리</div><div style="font-size:10px;color:#aaa;margin-top:3px;">사진 · 24시간</div></div>
+    </div>
+  </div>
+</div>
+<div class="moverlay center" id="m-post">
+  <div class="mbox">
+    <div class="mtitle" id="m-post-title">게시물 작성 <button class="mcls" onclick="CM('m-post')">×</button></div>
+    <textarea class="mta" id="post-ta" placeholder="무슨 생각을 하고 있나요? (최대 100자)" maxlength="100" oninput="cc(this,'post-cc')"></textarea>
+    <div class="ccount" id="post-cc">0 / 100</div>
+    <div class="macts"><button class="btn-sec" onclick="CM('m-post')">취소</button><button class="btn-p" onclick="submitPost()">게시</button></div>
+  </div>
+</div>
+<div class="moverlay center" id="m-story">
+  <div class="mbox">
+    <div class="mtitle">스토리 업로드 <button class="mcls" onclick="CM('m-story')">×</button></div>
+    <input type="file" id="story-file" accept="image/*" style="display:none" onchange="prevStory(this)">
+    <div id="story-prev" onclick="document.getElementById('story-file').click()" style="width:100%;height:160px;border:2px dashed var(--b);border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin-bottom:10px;">
+      <div style="text-align:center;color:var(--ts)"><div style="font-size:32px;">📷</div><div style="font-size:12px;margin-top:5px;">클릭하여 사진 선택</div></div>
+    </div>
+    <div class="macts"><button class="btn-sec" onclick="CM('m-story')">취소</button><button class="btn-p" onclick="submitStory()">올리기</button></div>
+  </div>
+</div>
+<!-- STORY VIEWER -->
+<div class="stv" id="stv">
+  <div class="stpbars" id="stpbars"></div>
+  <div class="stvhdr">
+    <div class="stvav" id="stv-av"></div>
+    <div class="stvname" id="stv-nm"></div>
+    <div class="stvtime" id="stv-tm"></div>
+    <button id="stv-del" style="display:none;background:rgba(255,60,60,.85);border:none;color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;cursor:pointer;margin-right:4px;">삭제</button>
+    <button class="stvcls" onclick="closeSTV()">×</button>
+  </div>
+  <div class="stimgwrap" id="stimgwrap">
+    <div class="sttap left" onclick="storySkip(-1)"></div>
+    <img id="stv-img" src="" alt="">
+    <div class="sttap right" onclick="storySkip(1)"></div>
+  </div>
+</div>
+<div class="moverlay center" id="m-sus">
+  <div class="mbox">
+    <div class="mtitle">계정 정지 <button class="mcls" onclick="CM('m-sus')">×</button></div>
+    <div id="sus-info" style="font-size:12px;color:var(--ts);margin-bottom:12px;"></div>
+    <div class="susp-opts">
+      <div class="susp-di"><input type="number" id="sus-days" min="1" max="365" placeholder="일수 입력"><button class="btn-p" style="padding:9px 14px;" onclick="doSuspend('days')">일시 정지</button></div>
+      <div class="susp-opt" onclick="doSuspend('perm')">🚫 영구정지</div>
+      <div class="susp-opt" style="border-color:var(--s);color:var(--s);" onclick="doSuspend('lift')">✅ 정지 해제</div>
+    </div>
+  </div>
+</div>
+<div class="moverlay center" id="m-flist">
+  <div class="mbox">
+    <div class="mtitle"><span id="flist-title">목록</span><button class="mcls" onclick="CM('m-flist')">×</button></div>
+    <div id="flist-cont" style="display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto;"></div>
+  </div>
+</div>
+<div class="moverlay center" id="m-pedit">
+  <div class="mbox">
+    <div class="mtitle">프로필 수정 <button class="mcls" onclick="CM('m-pedit')">×</button></div>
+    <div style="display:flex;flex-direction:column;gap:11px;">
+      <div class="ig"><label>아이디 변경</label><input id="pe-id-new" class="einput" placeholder="새 아이디 (변경 시 입력)"></div>
+      <div class="ig"><label>새 비밀번호</label><input id="pe-pw-new" type="password" class="einput" placeholder="새 비밀번호 (변경 시 입력)"></div>
+      <div class="ig"><label>가상국가 활동명</label><input id="pe-nick" class="einput"></div>
+      <div class="ig"><label>자기소개</label><textarea id="pe-bio" class="einput" rows="3" style="resize:none;"></textarea></div>
+      <div class="ig"><label>프로필 사진</label><input type="file" id="pe-pfp" accept="image/*" onchange="prevPfp(this)"><div id="pe-pfp-prev" style="margin-top:6px;"></div></div>
+    </div>
+    <div class="aerr" id="pe-err"></div>
+    <div class="macts"><button class="btn-sec" onclick="CM('m-pedit')">취소</button><button class="btn-p" onclick="savePE()">저장</button></div>
+  </div>
+</div>
+<!-- 인용 리트윗 모달 -->
+<div class="moverlay center" id="m-qrt">
+  <div class="mbox">
+    <div class="mtitle">🔁 인용 리트윗 <button class="mcls" onclick="CM('m-qrt')">×</button></div>
+    <div id="qrt-orig" style="background:var(--pbg);border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--b);font-size:13px;color:var(--ts);"></div>
+    <textarea class="mta" id="qrt-ta" placeholder="내 생각을 덧붙이세요... (선택, 최대 100자)" maxlength="100" oninput="cc(this,'qrt-cc')"></textarea>
+    <div class="ccount" id="qrt-cc">0 / 100</div>
+    <div id="qrt-pid" style="display:none;"></div>
+    <div class="macts"><button class="btn-sec" onclick="CM('m-qrt')">취소</button><button class="btn-p" onclick="submitQRT()">리트윗</button></div>
+  </div>
+</div>
+<!-- 댓글 정보 모달 -->
+<div class="moverlay center" id="m-cinfo">
+  <div class="mbox">
+    <div class="mtitle">📋 댓글 정보 <button class="mcls" onclick="CM('m-cinfo')">×</button></div>
+    <div class="pirow" id="cinfo-cont"></div>
+  </div>
+</div>
+<!-- 게시물 정보 모달 (admin용) -->
+<div class="moverlay center" id="m-pinfo">
+  <div class="mbox">
+    <div class="mtitle">📋 게시물 정보 <button class="mcls" onclick="CM('m-pinfo')">×</button></div>
+    <div class="pirow" id="pinfo-cont"></div>
+  </div>
+</div>
+<!-- 인증배지 모달 -->
+<div class="moverlay center" id="m-badge">
+  <div class="mbox">
+    <div class="mtitle">🏅 인증배지 설정 <button class="mcls" onclick="CM('m-badge')">×</button></div>
+    <p style="font-size:12px;color:var(--ts);margin-bottom:11px;">배지에 표시할 이모지/텍스트를 입력하세요. (예: ✔️ 👑 ⭐)</p>
+    <div class="ig"><label>배지 내용</label><input id="badge-inp" class="einput" placeholder="예: ✔️" maxlength="10"></div>
+    <div id="badge-uid" style="display:none;"></div>
+    <div class="macts"><button class="btn-sec" onclick="removeBadge()">배지 제거</button><button class="btn-p" onclick="saveBadge()">확인</button></div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:14px 0 80px;display:flex;flex-direction:column;gap:5px;align-items:center;">
+  <a href="https://open.kakao.com/o/sJFfXEih" target="_blank" style="color:#bbb;font-size:11px;letter-spacing:.3px;text-decoration:none;">Copyright © Сифрик</a>
+  <a href="https://band.us/band/90397980/member/OGTURFM6RKMBI5TRCSBWBRSCXY======/profile" target="_blank" style="color:#bbb;font-size:11px;letter-spacing:.3px;text-decoration:none;">Copyright © Rohjingu</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, deleteDoc,
+  collection, getDocs, query, orderBy, onSnapshot,
+  arrayUnion
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getStorage, ref as sRef, uploadString, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+// ===== FIREBASE =====
+const app = initializeApp({
+  apiKey:"AIzaSyDIffZz4ImYy9wlUujnirN4jk5ObYp7PNw",
+  authDomain:"miramira-9a34c.firebaseapp.com",
+  projectId:"miramira-9a34c",
+  storageBucket:"miramira-9a34c.firebasestorage.app",
+  messagingSenderId:"506476561553",
+  appId:"1:506476561553:web:8dbb3b232df753e5536b30"
+});
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// ===== CONSTANTS =====
+const ADMIN_DEF = {id:'admin',password:'admin',nickname:'관리자',bio:'MIRAMIRA 운영자',pfp:'',isAdmin:true,isSubAdmin:false,followers:[],following:[],suspended:null,notifs:[]};
+
+// ===== LS FALLBACK =====
+const ls = {
+  getUsers:()=>{ try{return JSON.parse(localStorage.getItem('mm_users')||'[]');}catch(e){return[];} },
+  saveUsers:a=>{ try{localStorage.setItem('mm_users',JSON.stringify(a));}catch(e){} },
+  getAdmin:()=>{ try{return JSON.parse(localStorage.getItem('mm_admin')||JSON.stringify(ADMIN_DEF));}catch(e){return ADMIN_DEF;} },
+  saveAdmin:u=>{ try{localStorage.setItem('mm_admin',JSON.stringify(u));}catch(e){} },
+  getPosts:()=>{ try{return JSON.parse(localStorage.getItem('mm_posts')||'[]');}catch(e){return[];} },
+  savePosts:a=>{ try{localStorage.setItem('mm_posts',JSON.stringify(a));}catch(e){} },
+  getStories:()=>{ try{return JSON.parse(localStorage.getItem('mm_stories')||'[]');}catch(e){return[];} },
+  saveStories:a=>{ try{localStorage.setItem('mm_stories',JSON.stringify(a));}catch(e){} },
+};
+
+// 배지 HTML 반환 (admin=☑️ 자동, 그 외 커스텀 배지)
+function getBadgeHtml(u) {
+  if(!u) return '';
+  if(u.isAdmin) return '<span class="ubadge">☑️</span>';
+  if(u.isSubAdmin) return '<span class="ubadge">✅</span>';
+  if(u.badge) return `<span class="ubadge">${esc(u.badge)}</span>`;
+  return '';
+}
+// Firestore 쓰기가 멈추지 않도록 타임아웃 래퍼
+function withTimeout(promise, ms=4000){
+  return Promise.race([promise, new Promise(res=>setTimeout(res, ms))]);
+}
+async function getU(id) {
+  if(!id) return null;
+  try {
+    const s = await getDoc(doc(db,'users',id));
+    if(s.exists()) return s.data();
+    if(id==='admin'){
+      await setDoc(doc(db,'users','admin'), ADMIN_DEF).catch(()=>{});
+      ls.saveAdmin(ADMIN_DEF);
+      return {...ADMIN_DEF};
+    }
+    return null;
+  } catch(e) {
+    if(id==='admin') return ls.getAdmin();
+    return ls.getUsers().find(u=>u.id===id)||null;
+  }
+}
+async function setU(u) {
+  if(!u||!u.id) return;
+  if(u.id==='admin') ls.saveAdmin(u);
+  else { const arr=ls.getUsers(); const i=arr.findIndex(x=>x.id===u.id); if(i>=0)arr[i]=u; else arr.push(u); ls.saveUsers(arr); }
+  // pfp는 압축된 base64이므로 Firestore에도 그대로 저장 (mm_img_ 키만 제외)
+  const fu = {...u};
+  if(fu.pfp && fu.pfp.startsWith('mm_img_')) fu.pfp = resolveImg(fu.pfp);
+  try { await withTimeout(setDoc(doc(db,'users',u.id), fu)); } catch(e) {}
+}
+async function getAllUsers() {
+  try { const s=await getDocs(collection(db,'users')); return s.docs.map(d=>d.data()).filter(u=>u.id!=='admin'); }
+  catch(e) { return ls.getUsers(); }
+}
+async function getP(id) {
+  if(!id) return null;
+  try { const s=await getDoc(doc(db,'posts',id)); return s.exists()?s.data():null; }
+  catch(e) { return ls.getPosts().find(p=>p.id===id)||null; }
+}
+async function setP(p) {
+  if(!p||!p.id) return;
+  lastMyAction = Date.now();
+  const arr=ls.getPosts(); const i=arr.findIndex(x=>x.id===p.id); if(i>=0)arr[i]=p; else arr.unshift(p); ls.savePosts(arr);
+  try { await withTimeout(setDoc(doc(db,'posts',p.id), p)); } catch(e) {}
+}
+async function delP(id) {
+  if(!id) return;
+  ls.savePosts(ls.getPosts().filter(p=>p.id!==id));
+  try { await deleteDoc(doc(db,'posts',id)); } catch(e) {}
+}
+async function getAllPosts() {
+  try {
+    const s = await getDocs(query(collection(db,'posts'), orderBy('createdAt','desc')));
+    if(s.docs.length) return s.docs.map(d=>d.data());
+  } catch(e) {}
+  return ls.getPosts().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+async function getAllStories() {
+  try { const s=await getDocs(collection(db,'stories')); return s.docs.map(d=>d.data()); }
+  catch(e) { return ls.getStories(); }
+}
+async function setS_unused(){} // replaced below
+async function delS(id) {
+  ls.saveStories(ls.getStories().filter(s=>s.id!==id));
+  try { await deleteDoc(doc(db,'stories',id)); } catch(e) {}
+}
+async function cleanStories() {
+  const now=Date.now();
+  const all=await getAllStories();
+  for(const s of all){
+    const t=tsToMs(s.createdAt);
+    if(now-t>=86400000) await delS(s.id);
+  }
+}
+
+// ===== ADS =====
+async function getAllAds(){
+  try{ const s=await getDocs(collection(db,'ads')); return s.docs.map(d=>d.data()); }
+  catch(e){ return JSON.parse(localStorage.getItem('mm_ads')||'[]'); }
+}
+async function setAd(ad){
+  const arr=JSON.parse(localStorage.getItem('mm_ads')||'[]'); const i=arr.findIndex(a=>a.id===ad.id); if(i>=0)arr[i]=ad; else arr.push(ad); localStorage.setItem('mm_ads',JSON.stringify(arr));
+  try{ await withTimeout(setDoc(doc(db,'ads',ad.id),ad)); }catch(e){}
+}
+async function delAd(id){
+  const arr=JSON.parse(localStorage.getItem('mm_ads')||'[]'); localStorage.setItem('mm_ads',JSON.stringify(arr.filter(a=>a.id!==id)));
+  try{ await deleteDoc(doc(db,'ads',id)); }catch(e){}
+}
+// 이미지를 최대치수/품질로 압축해 base64 반환 (Firestore 1MB 이내 목표)
+function compressImage(dataURL, maxDim=900, quality=0.72){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let {width,height}=img;
+      if(width>maxDim||height>maxDim){
+        if(width>height){ height=Math.round(height*maxDim/width); width=maxDim; }
+        else { width=Math.round(width*maxDim/height); height=maxDim; }
+      }
+      const cv=document.createElement('canvas');
+      cv.width=width; cv.height=height;
+      cv.getContext('2d').drawImage(img,0,0,width,height);
+      try{ resolve(cv.toDataURL('image/jpeg',quality)); }
+      catch(e){ resolve(dataURL); }
+    };
+    img.onerror=()=>resolve(dataURL);
+    img.src=dataURL;
+  });
+}
+// 이미지 업로드: Storage 우선(3초 타임아웃), 실패 시 압축 base64 (문자열 URL 직접 반환)
+async function uploadImage(dataURL, storagePath) {
+  // 1) Firebase Storage 시도 (3초 안에 안 되면 포기)
+  try {
+    const uploadPromise = (async()=>{
+      const r = sRef(storage, storagePath);
+      const snap = await uploadString(r, dataURL, 'data_url');
+      return await getDownloadURL(snap.ref);
+    })();
+    const url = await Promise.race([
+      uploadPromise,
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 3000))
+    ]);
+    if(url) return url;
+  } catch(e) {}
+  // 2) 실패 → 압축한 base64를 그대로 반환
+  try {
+    let compressed = await compressImage(dataURL);
+    if(compressed.length > 950000) compressed = await compressImage(dataURL, 640, 0.6);
+    if(compressed.length > 950000) compressed = await compressImage(dataURL, 480, 0.5);
+    return compressed;
+  } catch(e) { return dataURL; }
+}
+function resolveImg(url) {
+  if(!url) return '';
+  if(url.startsWith('mm_img_')) return localStorage.getItem(url) || '';
+  return url; // data: 또는 https: 둘 다 그대로 사용 가능
+}
+// 스토리 저장: 이미지가 base64여도 Firestore에 그대로 저장 (압축되어 1MB 이내)
+async function setS(s) {
+  ls.saveStories([...ls.getStories().filter(x=>x.id!==s.id), s]);
+  try { await withTimeout(setDoc(doc(db,'stories',s.id), s)); } catch(e) {}
+}
+
+// ===== IMAGE HELPERS =====
+function avatarHtml(u, size='38px') {
+  const img = u && u.pfp ? resolveImg(u.pfp) : '';
+  const init = uid2init(u ? u.id : '?');
+  if(img) return `<img src="${img}" style="width:${size};height:${size};border-radius:50%;object-fit:cover;" alt="">`;
+  return `<span style="font-size:${parseInt(size)*0.4}px;">${init}</span>`;
+}
+let CU = null;
+let curScreen = 'main';
+let editPid = null, editCid = null;
+let susTgt = null;
+let svStories = [], svIdx = 0, svTimer = null;
+let storyDataURL = null, newPfpURL = null, adImgDataURL = null;
+let feedTab = 'follow'; // 'follow' | 'all'
+let feedUnsub = null;
+let isRendering = false; // guard against snapshot loop
+let lastMyAction = 0; // 내 액션 직후 스냅샷 재렌더 억제용
+
+// ===== UTILS =====
+function tsToMs(ts) {
+  if(!ts) return 0;
+  if(typeof ts === 'number') return ts;
+  if(ts.seconds) return ts.seconds * 1000;
+  return 0;
+}
+function uid2init(id){ return String(id||'?').substring(0,2).toUpperCase(); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// 텍스트에서 @멘션, #해시태그를 클릭 가능한 링크로 변환
+function renderText(text){
+  if(!text) return '';
+  // 1. escape HTML 먼저
+  let s = esc(text);
+  // 2. @멘션: @아이디 (영문·숫자·_ 1~20자)
+  s = s.replace(/@([a-zA-Z0-9_]{1,20})/g, (match, uid) => {
+    return `<span class="mention" onclick="goProfile('${uid}')">@${uid}</span>`;
+  });
+  // 3. #해시태그: #단어 (한글·영문·숫자·_ 1~30자)
+  s = s.replace(/#([\w가-힣]{1,30})/g, (match, tag) => {
+    return `<span class="hashtag" onclick="searchHashtag('${esc(tag)}')">#${tag}</span>`;
+  });
+  return s;
+}
+function fmtDate(ts){
+  const t = tsToMs(ts);
+  if(!t) return '';
+  const d = Date.now()-t;
+  if(d<60000) return '방금 전';
+  if(d<3600000) return Math.floor(d/60000)+'분 전';
+  if(d<86400000) return Math.floor(d/3600000)+'시간 전';
+  const dd=new Date(t); return `${dd.getFullYear()}.${dd.getMonth()+1}.${dd.getDate()}`;
+}
+function fmtDateFull(ts){
+  const t = tsToMs(ts);
+  if(!t) return '알 수 없음';
+  const d=new Date(t);
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+function gid(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+function getBrowser(){
+  const ua=navigator.userAgent;
+  if(ua.includes('Edg')) return 'Edge';
+  if(ua.includes('Chrome')) return 'Chrome';
+  if(ua.includes('Firefox')) return 'Firefox';
+  if(ua.includes('Safari')) return 'Safari';
+  return '기타';
+}
+function isSus(u){
+  if(!u||!u.suspended) return false;
+  if(u.suspended.type==='perm') return true;
+  if(u.suspended.type==='days') return Date.now()<u.suspended.until;
+  return false;
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+function OM(id){ const el=document.getElementById(id); if(el) el.classList.add('open'); }
+function CM(id){ const el=document.getElementById(id); if(el) el.classList.remove('open'); }
+function showScr(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(n+'-screen');
+  if(el) el.classList.add('active');
+  curScreen=n;
+}
+
+// ===== NOTIFICATIONS (Firestore-backed, per-user) =====
+// Stored in user doc as u.notifs array
+function getNs(){ return (CU&&CU.notifs)||[]; }
+async function pushN(targetId, icon, text) {
+  if(!targetId) return;
+  try {
+    const u = await getU(targetId);
+    if(!u) return;
+    const n = {id:gid(), icon, text, t:Date.now(), u:true};
+    u.notifs = u.notifs||[];
+    u.notifs.unshift(n);
+    if(u.notifs.length>60) u.notifs.length=60;
+    await setU(u);
+    // If it's our own notification, update CU cache
+    if(CU && targetId===CU.id){ CU.notifs=u.notifs; updNBadge(); }
+  } catch(e) {}
+}
+function updNBadge(){
+  const ns=getNs();
+  const badge=document.getElementById('nbadge');
+  if(badge) badge.classList.toggle('on', ns.some(n=>n.u));
+}
+
+// ===== AUTH =====
+function switchTab(t){
+  document.getElementById('tab-login').classList.toggle('active',t==='login');
+  document.getElementById('tab-reg').classList.toggle('active',t==='reg');
+  document.getElementById('form-login').classList.toggle('active',t==='login');
+  document.getElementById('form-reg').classList.toggle('active',t==='reg');
+}
+async function doLogin(){
+  const id=document.getElementById('li-id').value.trim();
+  const pw=document.getElementById('li-pw').value;
+  const err=document.getElementById('li-err');
+  err.textContent='';
+  if(!id||!pw){err.textContent='아이디와 비밀번호를 입력하세요.';return;}
+  err.textContent='로그인 중...';
+
+  let u=null;
+  // 1. localStorage 먼저 (빠름, 오프라인 지원)
+  if(id==='admin') u=ls.getAdmin();
+  else u=ls.getUsers().find(x=>x.id===id)||null;
+
+  // 2. Firestore에서 최신 데이터 동기화 시도 (실패해도 계속)
+  try{
+    const fu=await Promise.race([
+      getDoc(doc(db,'users',id)),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),5000))
+    ]);
+    if(fu && typeof fu.exists === 'function' && fu.exists()) u=fu.data();
+  }catch(e){}
+
+  if(!u){err.textContent='아이디 또는 비밀번호가 틀렸습니다.';return;}
+  if(String(u.password)!==String(pw)){err.textContent='아이디 또는 비밀번호가 틀렸습니다.';return;}
+
+  CU=u; localStorage.setItem('mm_cur',id); err.textContent='';
+  try{ await enterApp(); }
+  catch(e){ err.textContent='앱 로드 중 오류: '+e.message; console.error(e); }
+}
+async function doRegister(){
+  const id=document.getElementById('rg-id').value.trim();
+  const pw=document.getElementById('rg-pw').value;
+  const nick=document.getElementById('rg-nick').value.trim();
+  const err=document.getElementById('rg-err');
+  err.textContent='';
+  if(!id||!pw||!nick){err.textContent='모든 항목을 입력하세요.';return;}
+  if(id==='admin'){err.textContent='사용할 수 없는 아이디입니다.';return;}
+  if(!/^[a-zA-Z0-9_]{2,20}$/.test(id)){err.textContent='아이디: 영문·숫자·_ 2~20자만 가능합니다.';return;}
+  // 중복 체크: localStorage 먼저
+  const lsExist=ls.getUsers().find(x=>x.id===id);
+  if(lsExist){err.textContent='이미 사용 중인 아이디입니다.';return;}
+  err.textContent='처리 중...';
+  // Firestore도 확인 (타임아웃 3초)
+  try{
+    const fu=await Promise.race([
+      getDoc(doc(db,'users',id)),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),3000))
+    ]);
+    if(fu && typeof fu.exists==='function' && fu.exists()){err.textContent='이미 사용 중인 아이디입니다.';return;}
+  }catch(e){}
+  const nu={id,password:pw,nickname:nick,bio:'',pfp:'',isAdmin:false,isSubAdmin:false,followers:[],following:[],suspended:null,notifs:[]};
+  try{ await setU(nu); }catch(e){}
+  toast('회원가입 완료! 로그인하세요.'); switchTab('login');
+  document.getElementById('li-id').value=id; err.textContent='';
+}
+function doLogout(){
+  CU=null; localStorage.removeItem('mm_cur');
+  if(feedUnsub){ feedUnsub(); feedUnsub=null; }
+  document.getElementById('bnav').style.display='none';
+  showScr('auth');
+}
+
+// ===== APP =====
+async function enterApp(){
+  try{ await cleanStories(); }catch(e){}
+  document.getElementById('topbar-uid').textContent=CU.id;
+  document.getElementById('bnav').style.display='flex';
+  showScr('main');
+  document.querySelectorAll('.nnbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-home').classList.add('active');
+  updNBadge();
+  try{ await renderFeed(); }catch(e){ console.error('renderFeed error:',e); }
+  startFeedListener();
+}
+function startFeedListener(){
+  if(feedUnsub){ feedUnsub(); feedUnsub=null; }
+  let firstSnap=true;
+  try {
+    feedUnsub = onSnapshot(
+      query(collection(db,'posts'), orderBy('createdAt','desc')),
+      async () => {
+        // 최초 스냅샷은 무시(이미 렌더됨)
+        if(firstSnap){ firstSnap=false; return; }
+        // 내가 방금 액션한 직후(2.5초)거나 렌더 중이면 무시 → 깜빡임 방지
+        if(Date.now() - lastMyAction < 2500) return;
+        if(curScreen==='main' && !isRendering) await renderFeed();
+      },
+      ()=>{}
+    );
+  } catch(e) {}
+}
+async function navTo(n){
+  document.querySelectorAll('.nnbtn:not(.upbtn)').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+n)?.classList.add('active');
+  if(n==='main'){ showScr('main'); await renderFeed(); }
+  else if(n==='search'){ showScr('search'); }
+  else if(n==='profile'){ showScr('profile'); await renderProfile(CU.id); }
+}
+async function goProfile(uid){
+  showScr('profile');
+  document.querySelectorAll('.nnbtn:not(.upbtn)').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-profile')?.classList.add('active');
+  await renderProfile(uid);
+}
+
+// ===== FEED =====
+function switchFeedTab(tab){
+  feedTab=tab;
+  document.getElementById('ftab-follow').classList.toggle('active',tab==='follow');
+  document.getElementById('ftab-all').classList.toggle('active',tab==='all');
+  renderFeed();
+}
+async function renderFeed(){
+  isRendering=true;
+  try {
+    await renderStories();
+    let posts=(await getAllPosts()).filter(p=>!p.isDeleted);
+
+    if(feedTab==='follow'){
+      // 팔로우 탭: 내가 팔로우한 사람 + 나 자신
+      const followed=new Set([...(CU.following||[]), CU.id]);
+      posts=posts.filter(p=>followed.has(p.authorId));
+      posts.sort((a,b)=>tsToMs(b.createdAt)-tsToMs(a.createdAt));
+    } else {
+      // 전체 탭: 최신순
+      posts.sort((a,b)=>tsToMs(b.createdAt)-tsToMs(a.createdAt));
+    }
+
+    const feed=document.getElementById('feed');
+    if(!posts.length){
+      feed.innerHTML=feedTab==='follow'
+        ?'<div class="empty"><div class="icon">👥</div><p>팔로우한 사람의 게시물이 없어요</p></div>'
+        :'<div class="empty"><div class="icon">✨</div><p>아직 게시물이 없어요</p></div>';
+      return;
+    }
+    const htmls=await Promise.all(posts.map(p=>buildPost(p)));
+    // 광고 삽입 (전체 탭에만): 게시물 10개당 약 1개, 같은 광고 연속 방지
+    if(feedTab==='all'){
+      const ads=await getAllAds();
+      if(ads.length){
+        const insertCount=Math.floor(htmls.length/10); // 10개당 1개
+        let lastAdId=null;
+        for(let i=0;i<insertCount;i++){
+          // 직전 광고와 다른 광고 선택
+          let ad=ads[Math.floor(Math.random()*ads.length)];
+          if(ads.length>1){
+            let tries=0;
+            while(ad.id===lastAdId && tries<5){ ad=ads[Math.floor(Math.random()*ads.length)]; tries++; }
+          }
+          lastAdId=ad.id;
+          // 10개 간격 위치에 삽입 (연속 방지를 위해 분산)
+          const pos=Math.min(htmls.length, (i+1)*10 + i);
+          htmls.splice(pos,0,buildAd(ad));
+        }
+      }
+    }
+    feed.innerHTML=htmls.join('');
+  } finally { isRendering=false; }
+}
+async function renderStories(){
+  await cleanStories();
+  const all=await getAllStories();
+  const byU={};
+  all.forEach(s=>{ if(!byU[s.authorId])byU[s.authorId]=[]; byU[s.authorId].push(s); });
+  let h=`<div class="si"><div class="sadd" onclick="openStoryM()">+</div><div class="sname">내 스토리</div></div>`;
+  const ord=Object.keys(byU).sort((a,b)=>((CU.following||[]).includes(b)?1:0)-((CU.following||[]).includes(a)?1:0));
+  for(const uid of ord){
+    const u=await getU(uid); if(!u) continue;
+    const av=u.pfp?`<img src="${resolveImg(u.pfp)}" alt="">`:`<span>${uid2init(uid)}</span>`;
+    h+=`<div class="si" onclick="viewStory('${uid}')"><div class="sr"><div class="sav">${av}</div></div><div class="sname">${esc(uid)}</div></div>`;
+  }
+  document.getElementById('sw').innerHTML=h;
+}
+
+async function buildPost(post){
+  const author=await getU(post.authorId);
+  const id=post.authorId;
+  const ts=tsToMs(post.createdAt);
+  const likes=post.likes||[]; const dislikes=post.dislikes||[]; const retweets=post.retweets||[]; const comments=post.comments||[];
+  const isOwn=CU.id===id; const isAd=CU.isAdmin||CU.isSubAdmin; const sus=isSus(CU);
+
+  // 관리자 계정은 항상 ☑️ 자동 배지
+  const badge = getBadgeHtml(author);
+  const pfp=author&&author.pfp?`<img src="${resolveImg(author.pfp)}" alt="">`:`<span style="font-size:15px;">${uid2init(id)}</span>`;
+
+  // ⋯ 메뉴
+  let more='';
+  if(isOwn && !post.adminDeleted && !post.hiddenByAdmin){
+    more=`<div class="pmore"><button class="mbtn" onclick="toggleDD('dd-${post.id}')">⋯</button><div class="dd" id="dd-${post.id}">
+      <div class="ddi" onclick="editPost('${post.id}');toggleDD('dd-${post.id}')">수정</div>
+      <div class="ddi danger" onclick="delPost('${post.id}',false);toggleDD('dd-${post.id}')">삭제</div>
+    </div></div>`;
+  } else if(isOwn && (post.adminDeleted || post.hiddenByAdmin)){
+    // 관리자가 삭제/숨김 처리해도 원작성자는 삭제 가능
+    more=`<div class="pmore"><button class="mbtn" onclick="toggleDD('dd-${post.id}')">⋯</button><div class="dd" id="dd-${post.id}">
+      <div class="ddi danger" onclick="delPost('${post.id}',false);toggleDD('dd-${post.id}')">삭제</div>
+    </div></div>`;
+  } else if(isAd && !post.adminDeleted){
+    more=`<div class="pmore"><button class="mbtn" onclick="toggleDD('dd-${post.id}')">⋯</button><div class="dd" id="dd-${post.id}">
+      <div class="ddi" onclick="showPInfo('${post.id}');toggleDD('dd-${post.id}')">📋 게시물 정보</div>
+      <div class="ddi" style="color:#E68000;" onclick="hidePost('${post.id}');toggleDD('dd-${post.id}')">${post.hiddenByAdmin?'숨김 해제':'글 숨기기'}</div>
+      ${!isOwn?`<div class="ddi danger" onclick="delPost('${post.id}',true);toggleDD('dd-${post.id}')">관리자 삭제</div>`:''}
+    </div></div>`;
+  } else if(isAd && post.adminDeleted){
+    more=`<div class="pmore"><button class="mbtn" onclick="toggleDD('dd-${post.id}')">⋯</button><div class="dd" id="dd-${post.id}">
+      <div class="ddi" onclick="showPInfo('${post.id}');toggleDD('dd-${post.id}')">📋 게시물 정보</div>
+    </div></div>`;
+  }
+
+  // 리트윗 헤더
+  let rtHeader='';
+  if(post.retweetOf){
+    rtHeader=`<div class="rtinfo">🔁 <strong>${esc(id)}</strong>님이 리트윗했습니다</div>`;
+  }
+
+  // 댓글 리트윗 헤더
+  if(post.retweetOfComment){
+    rtHeader=`<div class="rtinfo">🔁 <strong>${esc(id)}</strong>님이 댓글을 리트윗했습니다</div>`;
+  }
+
+  // 리트윗/인용 리트윗 원본 블록
+  let qrtBlock='';
+  const refId = post.quoteOf || post.retweetOf;
+  if(refId){
+    const orig=await getP(refId);
+    if(orig && !orig.isDeleted && !orig.adminDeleted){
+      const oAuthor=await getU(orig.authorId);
+      const oBadge=getBadgeHtml(oAuthor);
+      const oImg=oAuthor&&oAuthor.pfp?resolveImg(oAuthor.pfp):'';
+      const oAv=oImg?`<img src="${oImg}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">`:`<span style="font-size:8px;">${uid2init(orig.authorId)}</span>`;
+      qrtBlock=`<div class="qrt-block" onclick="event.stopPropagation();scrollToPost('${orig.id}')">
+        <div class="qrt-author" style="display:flex;align-items:center;gap:5px;">
+          <span class="cav" style="width:20px;height:20px;">${oAv}</span>
+          <span>${esc(orig.authorId)}${oBadge}</span>
+        </div>
+        <div class="qrt-content">${renderText(orig.content||'')}</div>
+      </div>`;
+    } else {
+      qrtBlock=`<div class="qrt-block"><div class="qrt-content" style="color:var(--ts);">원본 게시물이 삭제되었습니다</div></div>`;
+    }
+  }
+
+  // 내용
+  let cont='';
+  if(post.adminDeleted) cont=`<div class="pcont adel">🚫 운영약관을 위반한 게시물이 삭제되었습니다</div>`;
+  else if(post.hiddenByAdmin) cont=`<div class="pcont adel">🔴 이용방침을 위반하여 삭제된 게시글입니다</div>`;
+  else if(post.content) cont=`<div class="pcont" style="white-space:pre-wrap;">${renderText(post.content)}</div>`;
+
+  // 액션 버튼 (트위터 스타일)
+  let acts='';
+  if(!post.adminDeleted && !post.hiddenByAdmin){
+    const rtActive = retweets.includes(CU.id)||post.quotedBy?.includes(CU.id);
+    if(isOwn||sus){
+      acts=`<div class="pacts">
+        <button class="abt" onclick="toggleCm('${post.id}')">💬 ${comments.length}</button>
+        <span class="abt" style="cursor:default;">🔁 ${retweets.length}</span>
+        <span class="abt" style="cursor:default;">👍 ${likes.length}</span>
+        <span class="abt" style="cursor:default;">👎 ${dislikes.length}</span>
+      </div>`;
+    } else {
+      acts=`<div class="pacts">
+        <button class="abt" onclick="toggleCm('${post.id}')">💬 ${comments.length}</button>
+        <button class="abt${rtActive?' rk':''}" onclick="openRTMenu('${post.id}')">🔁 ${retweets.length}</button>
+        <button class="abt${likes.includes(CU.id)?' lk':''}" onclick="doLike('${post.id}')">👍 ${likes.length}</button>
+        <button class="abt${dislikes.includes(CU.id)?' dk':''}" onclick="doDislike('${post.id}')">👎 ${dislikes.length}</button>
+      </div>`;
+    }
+  }
+
+  return `<div class="pc${post.adminDeleted?' adel':''}" id="pc-${post.id}">
+    ${rtHeader}
+    <div class="ph">
+      <div class="pav" onclick="goProfile('${id}')">${pfp}</div>
+      <div class="pmeta">
+        <div class="puid" onclick="goProfile('${id}')">${esc(id)}${badge}</div>
+        <div class="pdate">${fmtDate(ts)}${post.edited?' · 수정됨':''}</div>
+      </div>
+      ${more}
+    </div>
+    ${cont}${qrtBlock}${acts}${await buildCommentsSec(post)}
+  </div>`;
+}
+
+function buildAd(ad){
+  const clickAttr=ad.link?`onclick="window.open('${esc(ad.link)}','_blank')" style="cursor:pointer;"`:'';
+  if(ad.type==='banner'){
+    // 가로형 배너 광고
+    return `<div class="pc" ${clickAttr} style="border:1.5px solid var(--pl);padding:0;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:5px;padding:6px 9px;">
+        <span style="background:var(--p);color:#fff;font-size:9px;font-weight:800;padding:1px 7px;border-radius:20px;">AD</span>
+        <span style="font-size:10px;color:var(--ts);">관리자 광고</span>
+        ${ad.link?`<span style="font-size:9px;color:var(--pl);margin-left:auto;">🔗 링크</span>`:''}
+      </div>
+      ${ad.image?`<img src="${resolveImg(ad.image)}" style="width:100%;display:block;object-fit:cover;max-height:160px;" alt="배너 광고">`:''}
+      ${ad.text?`<div style="font-size:12px;line-height:1.5;color:var(--t);padding:7px 9px;white-space:pre-wrap;">${esc(ad.text)}</div>`:''}
+    </div>`;
+  }
+  // 텍스트 광고
+  return `<div class="pc" ${clickAttr} style="border:1.5px solid var(--pl);background:linear-gradient(135deg,#faf7ff,#f0eaff);">
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+      <span style="background:var(--p);color:#fff;font-size:9px;font-weight:800;padding:1px 7px;border-radius:20px;">AD</span>
+      <span style="font-size:10px;color:var(--ts);">관리자 광고</span>
+      ${ad.link?`<span style="font-size:9px;color:var(--pl);margin-left:auto;">🔗 링크 열기</span>`:''}
+    </div>
+    <div style="font-size:12px;line-height:1.5;color:var(--t);white-space:pre-wrap;">${esc(ad.text)}</div>
+  </div>`;
+}
+async function buildCommentsSec(post){
+  if(post.adminDeleted||post.isDeleted) return '';
+  const sus=isSus(CU);
+  const comments=post.comments||[];
+  const cHtmls=(await Promise.all(comments.map(c=>buildComment(post.id,c)))).join('');
+  const inp=!sus?`<div class="cir"><textarea class="cinput" id="ci-${post.id}" rows="1" placeholder="댓글 달기..." oninput="arta(this)"></textarea><button class="csub" onclick="submitCm('${post.id}')">등록</button></div>`:'';
+  return `<div class="cmsec" id="cm-${post.id}" style="display:none;">${cHtmls}${inp}</div><button class="tcbtn" onclick="toggleCm('${post.id}')">💬 댓글 ${comments.length}개${comments.length?' 보기/숨기기':''}</button>`;
+}
+
+async function buildComment(pid,c){
+  const isOwn=CU.id===c.authorId; const isAd=CU.isAdmin||CU.isSubAdmin; const sus=isSus(CU);
+  const lk=c.likes||[]; const dk=c.dislikes||[]; const rt=c.retweets||[];
+  let acts='';
+  if(!sus){
+    acts=`<button class="cabt${lk.includes(CU.id)?' lk':''}" onclick="cmLike('${pid}','${c.id}')">👍 ${lk.length}</button>
+    <button class="cabt${dk.includes(CU.id)?' dk':''}" onclick="cmDislike('${pid}','${c.id}')">👎 ${dk.length}</button>
+    <button class="cabt${rt.includes(CU.id)?' rk':''}" onclick="cmRetweet('${pid}','${c.id}')">🔁 ${rt.length}</button>`;
+  }
+  if(isOwn) acts+=`<button class="cabt" onclick="editCm('${pid}','${c.id}')">수정</button><button class="cabt" style="color:var(--d);" onclick="delCm('${pid}','${c.id}',false)">삭제</button>`;
+  else if(isAd) acts+=`<button class="cabt" style="color:var(--d);" onclick="delCm('${pid}','${c.id}',true)">관리자삭제</button>`;
+  // 관리자는 댓글 정보도 볼 수 있음
+  if(isAd) acts+=`<button class="cabt" onclick="showCInfo('${pid}','${c.id}')">📋</button>`;
+  // 댓글 작성자 배지
+  const cAuthorU = await getU(c.authorId).catch(()=>null);
+  const cBadge = getBadgeHtml(cAuthorU);
+  const cAvatarImg = cAuthorU && cAuthorU.pfp ? resolveImg(cAuthorU.pfp) : '';
+  const cav = cAvatarImg ? `<img src="${cAvatarImg}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;">` : `<span>${uid2init(c.authorId)}</span>`;
+  return `<div class="cc" id="cc-${c.id}">
+    <div class="ch">
+      <div class="cav" onclick="goProfile('${c.authorId}')">${cav}</div>
+      <div class="cuid" onclick="goProfile('${c.authorId}')">${esc(c.authorId)}${cBadge}</div>
+      <div class="cdate">${fmtDate(c.createdAt)}</div>
+    </div>
+    <div class="ccont" style="white-space:pre-wrap;">${renderText(c.content)}</div>
+    <div class="cacts">${acts}</div>
+  </div>`;
+}
+
+async function refreshPost(pid){
+  const p=await getP(pid); const el=document.getElementById('pc-'+pid);
+  if(!p||!el) return;
+  const wasOpen=document.getElementById('cm-'+pid)?.style.display!=='none';
+  el.outerHTML=await buildPost(p);
+  if(wasOpen){const cm=document.getElementById('cm-'+pid);if(cm){cm.style.display='flex';cm.style.flexDirection='column';}}
+}
+// 게시물 액션바만 부분 갱신 (좋아요/싫어요/리트윗) - 깜빡임 없음
+async function refreshActions(pid){
+  const p=await getP(pid); if(!p) return;
+  const el=document.getElementById('pc-'+pid); if(!el) return;
+  const pacts=el.querySelector('.pacts'); if(!pacts) return;
+  const likes=p.likes||[], dislikes=p.dislikes||[], retweets=p.retweets||[], comments=p.comments||[];
+  const rtActive=retweets.includes(CU.id)||p.quotedBy?.includes(CU.id);
+  pacts.innerHTML=`
+    <button class="abt" onclick="toggleCm('${pid}')">💬 ${comments.length}</button>
+    <button class="abt${rtActive?' rk':''}" onclick="openRTMenu('${pid}')">🔁 ${retweets.length}</button>
+    <button class="abt${likes.includes(CU.id)?' lk':''}" onclick="doLike('${pid}')">👍 ${likes.length}</button>
+    <button class="abt${dislikes.includes(CU.id)?' dk':''}" onclick="doDislike('${pid}')">👎 ${dislikes.length}</button>`;
+}
+// 댓글 영역만 부분 갱신 - 입력창/스크롤 유지
+async function refreshComments(pid){
+  const p=await getP(pid); if(!p) return;
+  const cm=document.getElementById('cm-'+pid); if(!cm) return;
+  const wasOpen=cm.style.display!=='none';
+  const comments=p.comments||[];
+  const sus=isSus(CU);
+  // 입력창 내용 보존
+  const oldInput=document.getElementById('ci-'+pid);
+  const savedText=oldInput?oldInput.value:'';
+  const cHtmls=(await Promise.all(comments.map(c=>buildComment(pid,c)))).join('');
+  const inp=!sus?`<div class="cir"><textarea class="cinput" id="ci-${pid}" rows="1" placeholder="댓글 달기..." oninput="arta(this)"></textarea><button class="csub" onclick="submitCm('${pid}')">등록</button></div>`:'';
+  cm.innerHTML=cHtmls+inp;
+  cm.style.display=wasOpen?'flex':'none';
+  cm.style.flexDirection='column';
+  // 댓글 카운트 버튼 텍스트도 갱신
+  const tcbtn=cm.nextElementSibling;
+  if(tcbtn&&tcbtn.classList.contains('tcbtn')) tcbtn.textContent=`💬 댓글 ${comments.length}개${comments.length?' 보기/숨기기':''}`;
+  // 액션바 댓글 수도 갱신
+  const el=document.getElementById('pc-'+pid);
+  const firstAbt=el?.querySelector('.pacts .abt');
+  if(firstAbt) firstAbt.innerHTML=`💬 ${comments.length}`;
+  // 입력창 복원
+  const newInput=document.getElementById('ci-'+pid);
+  if(newInput&&savedText){ newInput.value=savedText; arta(newInput); }
+}
+
+// ===== POST ACTIONS =====
+function toggleCm(pid){ const el=document.getElementById('cm-'+pid); if(el){ el.style.display=el.style.display==='none'?'flex':'none'; if(el.style.display==='flex')el.style.flexDirection='column'; } }
+function toggleDD(id){ document.getElementById(id)?.classList.toggle('open'); }
+
+async function doLike(pid){
+  const p=await getP(pid); if(!p) return;
+  p.likes=p.likes||[]; p.dislikes=p.dislikes||[];
+  const had=p.likes.includes(CU.id);
+  if(had) p.likes=p.likes.filter(x=>x!==CU.id);
+  else{ p.likes.push(CU.id); p.dislikes=p.dislikes.filter(x=>x!==CU.id); }
+  await setP(p);
+  if(!had&&p.authorId!==CU.id) await pushN(p.authorId,'👍',`<strong>${CU.id}</strong>님이 회원님의 게시물을 좋아합니다.`);
+  await refreshActions(pid);
+}
+async function doDislike(pid){
+  const p=await getP(pid); if(!p) return;
+  p.dislikes=p.dislikes||[]; p.likes=p.likes||[];
+  const had=p.dislikes.includes(CU.id);
+  if(had) p.dislikes=p.dislikes.filter(x=>x!==CU.id);
+  else{ p.dislikes.push(CU.id); p.likes=p.likes.filter(x=>x!==CU.id); }
+  await setP(p);
+  if(!had&&p.authorId!==CU.id) await pushN(p.authorId,'👎',`<strong>${CU.id}</strong>님이 회원님의 게시물을 싫어합니다.`);
+  await refreshActions(pid);
+}
+// 리트윗 메뉴: 바로 리트윗 or 인용 리트윗
+function openRTMenu(pid){
+  // 이미 리트윗했으면 취소
+  getP(pid).then(p=>{
+    if(!p) return;
+    if((p.retweets||[]).includes(CU.id)){
+      doRetweet(pid); return;
+    }
+    // 메뉴 팝업 (인라인 드롭다운)
+    const existing=document.getElementById('rtmenu-'+pid);
+    if(existing){ existing.remove(); return; }
+    const el=document.getElementById('pc-'+pid);
+    const menu=document.createElement('div');
+    menu.id='rtmenu-'+pid;
+    menu.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--b);border-radius:14px;box-shadow:var(--shl);z-index:300;overflow:hidden;min-width:200px;';
+    menu.innerHTML=`
+      <div onclick="doRetweet('${pid}');this.parentNode.remove();" style="padding:14px 18px;cursor:pointer;font-weight:700;font-size:14px;border-bottom:1px solid var(--b);">🔁 리트윗</div>
+      <div onclick="openQRT('${pid}');this.parentNode.remove();" style="padding:14px 18px;cursor:pointer;font-weight:700;font-size:14px;">✏️ 인용 리트윗</div>
+      <div onclick="this.parentNode.remove();" style="padding:10px 18px;cursor:pointer;font-size:13px;color:var(--ts);">취소</div>`;
+    document.body.appendChild(menu);
+    setTimeout(()=>{ const m=document.getElementById('rtmenu-'+pid); if(m)m.remove(); },4000);
+  });
+}
+async function openQRT(pid){
+  const p=await getP(pid); if(!p) return;
+  document.getElementById('qrt-pid').textContent=pid;
+  document.getElementById('qrt-ta').value='';
+  cc(document.getElementById('qrt-ta'),'qrt-cc');
+  document.getElementById('qrt-orig').innerHTML=`<strong>@${esc(p.authorId)}</strong>: ${renderText((p.content||'').substring(0,60))}${p.content&&p.content.length>60?'...':''}`;
+  OM('m-qrt');
+}
+async function submitQRT(){
+  const pid=document.getElementById('qrt-pid').textContent;
+  const txt=document.getElementById('qrt-ta').value.trim();
+  const p=await getP(pid); if(!p) return;
+  // 인용 리트윗: 내 글 + quoteOf 필드
+  let ip='알 수 없음';
+  try{ const r=await fetch('https://api.ipify.org?format=json'); const d=await r.json(); ip=d.ip.split('.').slice(0,2).join('.')+'.*.*'; }catch(e){}
+  const mentions=[...new Set((txt.match(/@([a-zA-Z0-9_]{1,20})/g)||[]).map(m=>m.slice(1)))];
+  const hashtags=[...new Set((txt.match(/#([\w가-힣]{1,30})/g)||[]).map(h=>h.slice(1)))];
+  const rp={id:gid(),authorId:CU.id,content:txt||'',createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],quoteOf:pid,browser:getBrowser(),ip,mentions,hashtags};
+  // 원본 retweets 배열에도 추가 (카운트용)
+  p.retweets=p.retweets||[];
+  if(!p.retweets.includes(CU.id)) p.retweets.push(CU.id);
+  p.quotedBy=p.quotedBy||[]; if(!p.quotedBy.includes(CU.id)) p.quotedBy.push(CU.id);
+  await setP(p); await setP(rp);
+  if(p.authorId!==CU.id) await pushN(p.authorId,'🔁',`<strong>${CU.id}</strong>님이 회원님의 게시물을 인용 리트윗했습니다.`);
+  for(const uid of mentions){ if(uid!==CU.id){ const mu=await getU(uid); if(mu) await pushN(uid,'📣',`<strong>${CU.id}</strong>님이 게시물에서 회원님을 언급했습니다.`); } }
+  CM('m-qrt'); await renderFeed(); toast('인용 리트윗했습니다!');
+}
+async function doRetweet(pid){
+  const allP=await getAllPosts(); const pIdx=allP.findIndex(p=>p.id===pid); if(pIdx<0) return;
+  const p=allP[pIdx]; p.retweets=p.retweets||[];
+  if(p.retweets.includes(CU.id)){
+    p.retweets=p.retweets.filter(x=>x!==CU.id); await setP(p);
+    const myRt=allP.find(r=>(r.retweetOf===pid||r.quoteOf===pid)&&r.authorId===CU.id);
+    if(myRt) await delP(myRt.id);
+    await renderFeed(); toast('리트윗을 취소했습니다.'); return;
+  }
+  p.retweets.push(CU.id); await setP(p);
+  if(p.authorId!==CU.id) await pushN(p.authorId,'🔁',`<strong>${CU.id}</strong>님이 회원님의 게시물을 리트윗했습니다.`);
+  for(const fid of (CU.following||[])) if(fid!==CU.id) await pushN(fid,'🔁',`<strong>${CU.id}</strong>님이 새 리트윗을 올렸습니다.`);
+  // 일반 리트윗: 본문 없이 원본을 박스로 표시 (retweetOf)
+  const rp={id:gid(),authorId:CU.id,content:'',createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],retweetOf:pid,browser:getBrowser()};
+  await setP(rp);
+  await renderFeed(); toast('리트윗했습니다!');
+}
+// 댓글 리트윗 → 독립 게시물로 메인 피드에 등록
+async function cmRetweet(pid,cid){
+  const p=await getP(pid); if(!p) return;
+  const c=p.comments.find(c=>c.id===cid); if(!c) return;
+  c.retweets=c.retweets||[];
+  const had=c.retweets.includes(CU.id);
+  if(had){
+    c.retweets=c.retweets.filter(x=>x!==CU.id); await setP(p);
+    // 댓글 RT 게시물도 삭제
+    const allP=await getAllPosts();
+    const myRt=allP.find(r=>r.retweetOfComment===cid&&r.authorId===CU.id);
+    if(myRt) await delP(myRt.id);
+    await refreshComments(pid); toast('댓글 리트윗을 취소했습니다.'); return;
+  }
+  c.retweets.push(CU.id); await setP(p);
+  // 댓글 내용을 메인 피드에 독립 게시물로
+  const rp={id:gid(),authorId:CU.id,content:c.content,createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],retweetOfComment:cid,browser:getBrowser()};
+  await setP(rp);
+  await refreshComments(pid); toast('댓글을 리트윗했습니다!');
+}
+// 댓글 정보 (관리자용)
+async function showCInfo(pid,cid){
+  const p=await getP(pid); if(!p) return;
+  const c=p.comments.find(c=>c.id===cid); if(!c) return;
+  document.getElementById('cinfo-cont').innerHTML=`
+    <div class="piitem"><div class="pilabel">⏰ 작성 시간</div><div class="pival">${fmtDateFull(c.createdAt)}</div></div>
+    <div class="piitem"><div class="pilabel">🌐 브라우저</div><div class="pival">${esc(c.browser||'알 수 없음')}</div></div>
+    <div class="piitem"><div class="pilabel">👤 작성자</div><div class="pival">${esc(c.authorId)}</div></div>`;
+  OM('m-cinfo');
+}
+async function editPost(pid){
+  const p=await getP(pid); if(!p) return;
+  document.getElementById('post-ta').value=p.content;
+  cc(document.getElementById('post-ta'),'post-cc');
+  editPid=pid;
+  document.getElementById('m-post-title').innerHTML='게시물 수정 <button class="mcls" onclick="CM(\'m-post\')">×</button>';
+  OM('m-post');
+}
+async function delPost(pid,isAd){
+  if(isAd){
+    const p=await getP(pid); if(!p) return;
+    p.adminDeleted=true; p.content='[관리자 삭제]';
+    await setP(p); await refreshPost(pid); toast('관리자가 게시물을 삭제했습니다.');
+  } else {
+    const all=await getAllPosts();
+    await delP(pid);
+    for(const r of all) if(r.retweetOf===pid) await delP(r.id);
+    document.getElementById('pc-'+pid)?.remove();
+    toast('게시물이 삭제되었습니다.');
+  }
+}
+async function hidePost(pid){
+  const p=await getP(pid); if(!p) return;
+  p.hiddenByAdmin=!p.hiddenByAdmin;
+  await setP(p); await refreshPost(pid);
+  toast(p.hiddenByAdmin?'게시물을 숨겼습니다.':'게시물 숨김을 해제했습니다.');
+}
+async function submitCm(pid){
+  if(isSus(CU)){toast('정지된 계정입니다.');return;}
+  const inp=document.getElementById('ci-'+pid); if(!inp) return;
+  const txt=inp.value.trim(); if(!txt) return;
+  const p=await getP(pid); if(!p) return;
+  p.comments=p.comments||[];
+  if(editCid){
+    const c=p.comments.find(c=>c.id===editCid);
+    if(c){c.content=txt;c.edited=true;}
+    await setP(p); editCid=null; inp.value=''; await refreshComments(pid); toast('댓글이 수정되었습니다.'); return;
+  }
+  const cm={id:gid(),authorId:CU.id,content:txt,createdAt:Date.now(),likes:[],dislikes:[],retweets:[],browser:getBrowser()};
+  p.comments.push(cm); await setP(p);
+  if(p.authorId!==CU.id) await pushN(p.authorId,'💬',`<strong>${CU.id}</strong>님이 회원님의 게시물에 댓글을 달았습니다.`);
+  // 댓글 멘션 알림
+  const mentions=[...new Set((txt.match(/@([a-zA-Z0-9_]{1,20})/g)||[]).map(m=>m.slice(1)))];
+  for(const uid of mentions){
+    if(uid===CU.id||uid===p.authorId) continue;
+    const mu=await getU(uid);
+    if(mu) await pushN(uid,'📣',`<strong>${CU.id}</strong>님이 댓글에서 회원님을 언급했습니다.`);
+  }
+  inp.value=''; await refreshComments(pid);
+}
+async function editCm(pid,cid){
+  const p=await getP(pid); const c=p?.comments?.find(c=>c.id===cid); if(!c) return;
+  const inp=document.getElementById('ci-'+pid);
+  if(!inp){toggleCm(pid);setTimeout(()=>editCm(pid,cid),200);return;}
+  inp.value=c.content; editCid=cid;
+}
+async function delCm(pid,cid,isAd){
+  const p=await getP(pid); if(!p) return;
+  if(isAd){const c=p.comments.find(c=>c.id===cid);if(c){c.adminDeleted=true;c.content='[관리자 삭제]';}}
+  else p.comments=p.comments.filter(c=>c.id!==cid);
+  await setP(p); await refreshComments(pid);
+}
+async function cmLike(pid,cid){
+  const p=await getP(pid); if(!p) return;
+  const c=p.comments.find(c=>c.id===cid); if(!c) return;
+  c.likes=c.likes||[]; c.dislikes=c.dislikes||[];
+  if(c.likes.includes(CU.id)) c.likes=c.likes.filter(x=>x!==CU.id);
+  else{c.likes.push(CU.id);c.dislikes=c.dislikes.filter(x=>x!==CU.id);}
+  await setP(p); await refreshComments(pid);
+}
+async function cmDislike(pid,cid){
+  const p=await getP(pid); if(!p) return;
+  const c=p.comments.find(c=>c.id===cid); if(!c) return;
+  c.dislikes=c.dislikes||[]; c.likes=c.likes||[];
+  if(c.dislikes.includes(CU.id)) c.dislikes=c.dislikes.filter(x=>x!==CU.id);
+  else{c.dislikes.push(CU.id);c.likes=c.likes.filter(x=>x!==CU.id);}
+  await setP(p); await refreshComments(pid);
+}
+
+// ===== UPLOAD =====
+function openUpload(){
+  if(isSus(CU)){toast('정지된 계정입니다.');return;}
+  editPid=null;
+  document.getElementById('m-post-title').innerHTML='게시물 작성 <button class="mcls" onclick="CM(\'m-post\')">×</button>';
+  OM('m-uptype');
+}
+function openPostM(){ CM('m-uptype'); document.getElementById('post-ta').value=''; cc(document.getElementById('post-ta'),'post-cc'); OM('m-post'); }
+function openStoryM(){ CM('m-uptype'); storyDataURL=null; document.getElementById('story-prev').innerHTML='<div style="text-align:center;color:var(--ts)"><div style="font-size:32px;">📷</div><div style="font-size:12px;margin-top:5px;">클릭하여 사진 선택</div></div>'; OM('m-story'); }
+function prevStory(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ storyDataURL=e.target.result; document.getElementById('story-prev').innerHTML=`<img src="${storyDataURL}" style="max-width:100%;max-height:150px;border-radius:8px;">`; };
+  r.readAsDataURL(f);
+}
+async function submitPost(){
+  const txt=document.getElementById('post-ta').value.trim();
+  if(!txt){toast('내용을 입력하세요.');return;}
+  if(txt.length>100){toast('100자 초과');return;}
+  if(editPid){
+    const p=await getP(editPid); if(p){p.content=txt;p.edited=true;await setP(p);}
+    CM('m-post'); editPid=null; await renderFeed(); toast('수정되었습니다.'); return;
+  }
+  // IP 수집 (앞 2단락)
+  let ip='알 수 없음';
+  try{ const r=await fetch('https://api.ipify.org?format=json'); const d=await r.json(); ip=d.ip.split('.').slice(0,2).join('.')+'.*.*'; }catch(e){}
+  // 멘션/해시태그 추출
+  const mentions=[...new Set((txt.match(/@([a-zA-Z0-9_]{1,20})/g)||[]).map(m=>m.slice(1)))];
+  const hashtags=[...new Set((txt.match(/#([\w가-힣]{1,30})/g)||[]).map(h=>h.slice(1)))];
+  const p={id:gid(),authorId:CU.id,content:txt,createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],browser:getBrowser(),ip,mentions,hashtags};
+  await setP(p); CM('m-post');
+  // 팔로워에게 알림
+  for(const fid of (CU.following||[])) await pushN(fid,'📝',`<strong>${CU.id}</strong>님이 새 게시물을 올렸습니다.`);
+  // admin 글이면 전체 알림
+  if(CU.id==='admin'){ const us=await getAllUsers(); for(const u of us) await pushN(u.id,'📢','<strong>관리자</strong>가 새 공지를 올렸습니다.'); }
+  // 멘션 알림 전송
+  for(const uid of mentions){
+    if(uid===CU.id) continue;
+    const mu=await getU(uid);
+    if(mu) await pushN(uid,'📣',`<strong>${CU.id}</strong>님이 게시물에서 회원님을 언급했습니다.`);
+  }
+  await renderFeed(); toast('게시물이 올라갔어요!');
+}
+async function submitStory(){
+  if(!storyDataURL){toast('사진을 선택하세요.');return;}
+  toast('업로드 중...');
+  const sid=gid();
+  const url = await uploadImage(storyDataURL, 'stories/'+sid+'.jpg');
+  const s={id:sid,authorId:CU.id,image:url,createdAt:Date.now()};
+  await setS(s); CM('m-story'); storyDataURL=null; await renderStories(); toast('스토리가 올라갔어요!');
+}
+
+// ===== STORY VIEWER =====
+async function viewStory(uid){
+  await cleanStories();
+  const all=await getAllStories(); svStories=all.filter(s=>s.authorId===uid);
+  if(!svStories.length){toast('스토리가 없습니다.');return;}
+  svIdx=0; await showSTV(0); document.getElementById('stv').classList.add('open');
+}
+async function showSTV(idx){
+  const s=svStories[idx];
+  const u=await getU(s.authorId);
+  const av=document.getElementById('stv-av');
+  if(u&&u.pfp) av.innerHTML=`<img src="${resolveImg(u.pfp)}" alt="">`;
+  else av.textContent=uid2init(s.authorId);
+  document.getElementById('stv-nm').textContent=s.authorId;
+  document.getElementById('stv-tm').textContent=fmtDate(s.createdAt);
+  document.getElementById('stv-img').src=resolveImg(s.image)||'';
+  // 삭제 버튼: 본인 or admin/subadmin
+  const isOwn=CU.id===s.authorId; const isAd=CU.isAdmin||CU.isSubAdmin;
+  const delBtn=document.getElementById('stv-del');
+  if(delBtn){ delBtn.style.display=(isOwn||isAd)?'block':'none'; delBtn.onclick=()=>deleteMyStory(s.id); }
+  // 진행바
+  const bars=document.getElementById('stpbars');
+  bars.innerHTML=svStories.map((_,i)=>`<div class="stpbar"><div class="stpfill" id="spf-${i}"></div></div>`).join('');
+  for(let i=0;i<idx;i++){ const f=document.getElementById('spf-'+i); if(f)f.style.width='100%'; }
+  if(svTimer) clearInterval(svTimer);
+  const fill=document.getElementById('spf-'+idx); let pct=0;
+  svTimer=setInterval(()=>{
+    pct+=1; if(fill)fill.style.width=pct+'%';
+    if(pct>=100){ clearInterval(svTimer); svIdx++; if(svIdx<svStories.length)showSTV(svIdx); else closeSTV(); }
+  },50);
+}
+async function deleteMyStory(sid){
+  if(!confirm('스토리를 삭제하시겠습니까?')) return;
+  await delS(sid);
+  svStories=svStories.filter(s=>s.id!==sid);
+  if(svStories.length===0){ closeSTV(); await renderStories(); toast('스토리가 삭제되었습니다.'); return; }
+  if(svIdx>=svStories.length) svIdx=svStories.length-1;
+  await showSTV(svIdx); await renderStories(); toast('스토리가 삭제되었습니다.');
+}
+function closeSTV(){ if(svTimer)clearInterval(svTimer); document.getElementById('stv').classList.remove('open'); }
+function storySkip(d){
+  if(svTimer) clearInterval(svTimer);
+  if(d===-1){ if(svIdx>0){svIdx--;showSTV(svIdx);}else closeSTV(); }
+  else{ if(svIdx<svStories.length-1){svIdx++;showSTV(svIdx);}else closeSTV(); }
+}
+
+// ===== SEARCH =====
+function searchHashtag(tag){
+  navTo('search');
+  setTimeout(()=>{
+    const inp=document.getElementById('sinput');
+    if(inp){ inp.value='#'+tag; doSearch(); }
+  },100);
+}
+async function doSearch(){
+  const raw=document.getElementById('sinput').value.trim();
+  const q=raw.toLowerCase();
+  const res=document.getElementById('sres');
+  if(!q){res.innerHTML='<div class="empty"><div class="icon">🔍</div><p>검색어를 입력하세요</p></div>';return;}
+
+  // 해시태그 검색 모드 (#으로 시작)
+  const isHashSearch = q.startsWith('#');
+  const hashTag = isHashSearch ? q.slice(1) : null;
+
+  const allPosts = await getAllPosts();
+  let h='';
+
+  if(isHashSearch){
+    // 해시태그로만 검색
+    const posts = allPosts.filter(p=>
+      !p.adminDeleted && !p.isDeleted &&
+      (p.hashtags||[]).some(t=>t.toLowerCase()===hashTag) ||
+      (!p.adminDeleted && !p.isDeleted && (p.content||'').toLowerCase().includes(q))
+    );
+    h+=`<div class="stitle">🏷️ #${esc(raw.slice(1))} 게시물 ${posts.length}개</div>`;
+    if(posts.length){
+      const ph=await Promise.all(posts.map(p=>buildPost(p)));
+      h+=ph.join('');
+    } else {
+      h+='<div class="empty"><div class="icon">🏷️</div><p>해당 해시태그의 게시물이 없습니다</p></div>';
+    }
+  } else {
+    // 일반 검색: 사용자 + 게시물
+    const users=[await getU('admin'),...(await getAllUsers())].filter(Boolean);
+    const mu=users.filter(u=>u.id.toLowerCase().includes(q)||(u.nickname||'').toLowerCase().includes(q));
+    const posts=allPosts.filter(p=>!p.adminDeleted&&!p.isDeleted&&(p.content||'').toLowerCase().includes(q));
+    if(mu.length){
+      h+=`<div class="stitle">👤 사용자</div>`;
+      h+=mu.map(u=>{
+        const img = u.pfp ? resolveImg(u.pfp) : '';
+        const pf=img?`<img src="${img}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;">`:`<div style="width:42px;height:42px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--p);">${uid2init(u.id)}</div>`;
+        const bdg=getBadgeHtml(u);
+        return `<div class="uri" onclick="goProfile('${u.id}')">${pf}<div><div style="font-weight:700;font-size:13px;">${esc(u.id)}${bdg}</div><div style="font-size:11px;color:var(--ts);">${esc(u.nickname)}</div></div></div>`;
+      }).join('');
+    }
+    if(posts.length){
+      h+=`<div class="stitle">📝 게시물</div>`;
+      const ph=await Promise.all(posts.map(p=>buildPost(p)));
+      h+=ph.join('');
+    }
+    if(!mu.length&&!posts.length) h='<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>';
+  }
+  res.innerHTML=h;
+}
+function scrollToPost(pid){
+  navTo('main');
+  setTimeout(async()=>{
+    const el=document.getElementById('pc-'+pid);
+    if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='2px solid var(--p)'; setTimeout(()=>el.style.outline='',1800); }
+    else toast('원본 게시물을 찾을 수 없습니다.');
+  },300);
+}
+
+// ===== PROFILE =====
+async function renderProfile(uid){
+  const pc=document.getElementById('prcontent');
+  pc.innerHTML='<div class="empty" style="padding:40px;"><div class="spin" style="width:28px;height:28px;border-width:3px;"></div></div>';
+  const u=await getU(uid);
+  if(!u){pc.innerHTML='<div class="empty"><p>사용자를 찾을 수 없습니다</p></div>';return;}
+  const isSelf=CU.id===uid; const isAd=CU.isAdmin||CU.isSubAdmin;
+  const pfpSrc = u.pfp ? resolveImg(u.pfp) : '';
+  const pfp=pfpSrc?`<img src="${pfpSrc}" alt="">`:`<span style="font-size:26px;">${uid2init(uid)}</span>`;
+  const fol=u.followers||[]; const fing=u.following||[];
+  const isF=(CU.following||[]).includes(uid);
+  let susBadge='';
+  if(u.suspended){
+    if(u.suspended.type==='perm') susBadge='<div class="susbadge">🚫 영구정지</div>';
+    else if(u.suspended.type==='days'&&Date.now()<u.suspended.until) susBadge=`<div class="susbadge">⏸ ${Math.ceil((u.suspended.until-Date.now())/86400000)}일 정지 중</div>`;
+  }
+  const badge=getBadgeHtml(u);
+
+  let acts='';
+  if(isSelf){
+    acts=`<div class="prfacts">
+      <button class="btn-o" onclick="openPE()">프로필 수정</button>
+      ${CU.isAdmin?`<button class="btn-p" style="font-size:12px;" onclick="openAdmin()">관리자설정</button>`:''}
+      ${CU.isSubAdmin&&!CU.isAdmin?`<button class="btn-p" style="font-size:12px;" onclick="openAdmin()">부관리자설정</button>`:''}
+      <button class="btn-o" style="margin-left:auto;" onclick="doLogout()">로그아웃</button>
+    </div>`;
+  } else {
+    // 관리자: 정지 + 인증배지 버튼
+    const adBtns=isAd?`
+      <button class="btn-do" onclick="openSusMod('${uid}')">정지 설정</button>
+      ${CU.isAdmin?`<button class="btn-p" style="font-size:12px;" onclick="openBadgeMod('${uid}')">🏅 인증배지</button>`:''}
+    `:'';
+    acts=`<div class="prfacts">
+      <button class="btn-f ${isF?'ing':''}" onclick="doFollow('${uid}')">${isF?'팔로잉':'팔로우'}</button>
+      ${adBtns}
+    </div>`;
+  }
+
+  const posts=(await getAllPosts()).filter(p=>p.authorId===uid&&!p.isDeleted&&!p.adminDeleted);
+  const ph=posts.length?(await Promise.all(posts.map(p=>buildPost(p)))).join(''):'<div class="empty"><div class="icon">📝</div><p>게시물이 없습니다</p></div>';
+
+  pc.innerHTML=`
+    <div class="prfhdr">
+      <div class="prfrow">
+        <div class="prfpic">${pfp}</div>
+        <div class="prfstats">
+          <div class="prfstat" onclick="showFL('${uid}','followers')"><div class="prfstat-n">${fol.length}</div><div class="prfstat-l">팔로워</div></div>
+          <div class="prfstat" onclick="showFL('${uid}','following')"><div class="prfstat-n">${fing.length}</div><div class="prfstat-l">팔로잉</div></div>
+        </div>
+      </div>
+      <div class="prfuid">${esc(uid)}${badge}</div>
+      <div class="prfnick">${esc(u.nickname||'')}</div>
+      ${u.bio?`<div class="prfbio" style="white-space:pre-wrap;">${renderText(u.bio)}</div>`:''}
+      ${susBadge}
+    </div>
+    ${acts}
+    <div class="prfposts">${ph}</div>`;
+}
+async function doFollow(uid){
+  const target=await getU(uid); if(!target) return;
+  CU.following=CU.following||[]; target.followers=target.followers||[];
+  const wasF=CU.following.includes(uid);
+  if(wasF){ CU.following=CU.following.filter(x=>x!==uid); target.followers=target.followers.filter(x=>x!==CU.id); }
+  else{ CU.following.push(uid); target.followers.push(CU.id); await pushN(uid,'👥',`<strong>${CU.id}</strong>님이 회원님을 팔로우했습니다.`); }
+  await setU(CU); await setU(target);
+  await renderProfile(uid); toast(!wasF?`${uid}을(를) 팔로우했습니다.`:'팔로우 취소');
+}
+async function showFL(uid,type){
+  const u=await getU(uid); if(!u) return;
+  const list=type==='followers'?(u.followers||[]):(u.following||[]);
+  document.getElementById('flist-title').textContent=type==='followers'?'팔로워':'팔로잉';
+  const cont=document.getElementById('flist-cont');
+  if(!list.length){cont.innerHTML='<div class="empty"><p>목록이 비어있습니다</p></div>';OM('m-flist');return;}
+  const items=await Promise.all(list.map(async id=>{
+    const lu=await getU(id);
+    const img = lu&&lu.pfp ? resolveImg(lu.pfp) : '';
+    const pi=img?`<img src="${img}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`:`<div style="width:40px;height:40px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--p);">${uid2init(id)}</div>`;
+    const bdg = getBadgeHtml(lu);
+    return `<div class="fitem" onclick="CM('m-flist');goProfile('${id}')"><div class="fiav">${pi}</div><div><div style="font-weight:700;font-size:13px;">${esc(id)}${bdg}</div><div style="font-size:11px;color:var(--ts);">${esc(lu?lu.nickname:'')}</div></div></div>`;
+  }));
+  cont.innerHTML=items.join(''); OM('m-flist');
+}
+
+// ===== PROFILE EDIT =====
+function openPE(){
+  document.getElementById('pe-id-new').value='';
+  document.getElementById('pe-pw-new').value='';
+  document.getElementById('pe-nick').value=CU.nickname||'';
+  document.getElementById('pe-bio').value=CU.bio||'';
+  document.getElementById('pe-pfp-prev').innerHTML=CU.pfp?`<img src="${CU.pfp}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;">`:'';
+  document.getElementById('pe-err').textContent='';
+  OM('m-pedit');
+}
+function prevPfp(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ newPfpURL=e.target.result; document.getElementById('pe-pfp-prev').innerHTML=`<img src="${newPfpURL}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;">`; };
+  r.readAsDataURL(f);
+}
+async function savePE(){
+  const errEl=document.getElementById('pe-err'); errEl.textContent='';
+  const newId=document.getElementById('pe-id-new').value.trim();
+  const newPw=document.getElementById('pe-pw-new').value;
+  const newNick=document.getElementById('pe-nick').value.trim();
+  const newBio=document.getElementById('pe-bio').value.trim();
+
+  // 아이디 변경 요청
+  if(newId && newId!==CU.id){
+    if(!/^[a-zA-Z0-9_]{2,20}$/.test(newId)){errEl.textContent='아이디: 영문·숫자·_ 2~20자만 가능합니다.';return;}
+    if(newId==='admin'){errEl.textContent='사용할 수 없는 아이디입니다.';return;}
+    const ex=await getU(newId);
+    if(ex){errEl.textContent='이미 사용 중인 아이디입니다.';return;}
+    errEl.textContent='데이터 이전 중...';
+    const oldId=CU.id;
+    CU.id=newId;
+    if(newPw) CU.password=newPw;
+    CU.nickname=newNick; CU.bio=newBio;
+    if(newPfpURL){ CU.pfp=await uploadImage(newPfpURL,'pfp/'+newId+'.jpg'); newPfpURL=null; }
+    await setU(CU);
+
+    // === 옛 아이디의 모든 데이터를 새 아이디로 이전 ===
+    const allPosts=await getAllPosts();
+    for(const p of allPosts){
+      let changed=false;
+      if(p.authorId===oldId){ p.authorId=newId; changed=true; }
+      // 좋아요/싫어요/리트윗 배열 내 oldId 교체
+      ['likes','dislikes','retweets','quotedBy'].forEach(k=>{
+        if(Array.isArray(p[k]) && p[k].includes(oldId)){ p[k]=p[k].map(x=>x===oldId?newId:x); changed=true; }
+      });
+      // 댓글 작성자/반응
+      if(Array.isArray(p.comments)){
+        p.comments.forEach(c=>{
+          if(c.authorId===oldId){ c.authorId=newId; changed=true; }
+          ['likes','dislikes','retweets'].forEach(k=>{
+            if(Array.isArray(c[k]) && c[k].includes(oldId)){ c[k]=c[k].map(x=>x===oldId?newId:x); changed=true; }
+          });
+        });
+      }
+      // 멘션 배열
+      if(Array.isArray(p.mentions) && p.mentions.includes(oldId)){ p.mentions=p.mentions.map(x=>x===oldId?newId:x); changed=true; }
+      if(changed) await setP(p);
+    }
+    // 스토리 이전
+    const allStories=await getAllStories();
+    for(const s of allStories){ if(s.authorId===oldId){ s.authorId=newId; await setS(s); } }
+    // 팔로워/팔로잉 관계 이전: 나를 팔로우하던 사람들, 내가 팔로우하던 사람들의 목록에서 oldId→newId
+    const allUsers=[await getU('admin'),...(await getAllUsers())].filter(Boolean);
+    for(const u of allUsers){
+      if(u.id===oldId) continue;
+      let ch=false;
+      if(Array.isArray(u.followers)&&u.followers.includes(oldId)){ u.followers=u.followers.map(x=>x===oldId?newId:x); ch=true; }
+      if(Array.isArray(u.following)&&u.following.includes(oldId)){ u.following=u.following.map(x=>x===oldId?newId:x); ch=true; }
+      if(ch) await setU(u);
+    }
+
+    // 옛 계정 문서 삭제
+    try{ await deleteDoc(doc(db,'users',oldId)); }catch(e){}
+    ls.saveUsers(ls.getUsers().filter(u=>u.id!==oldId));
+    localStorage.setItem('mm_cur',newId);
+    CM('m-pedit'); toast('아이디가 변경되었습니다. 다시 로그인해주세요.');
+    doLogout(); return;
+  }
+
+  if(newPw) CU.password=newPw;
+  CU.nickname=newNick; CU.bio=newBio;
+  if(newPfpURL){
+    toast('프로필 사진 업로드 중...');
+    CU.pfp=await uploadImage(newPfpURL,'pfp/'+CU.id+'.jpg'); newPfpURL=null;
+  }
+  await setU(CU); CM('m-pedit'); await renderProfile(CU.id); toast('프로필이 저장되었습니다!');
+}
+
+// ===== ADMIN =====
+async function openAdmin(){
+  const users=await getAllUsers();
+  const ads=await getAllAds();
+  const rows=users.map(u=>`
+    <div class="uarow">
+      <div class="uainfo">
+        <div class="uaid">${esc(u.id)}</div>
+        <div class="uapw">PW: ${esc(u.password)}</div>
+        ${u.suspended?`<div style="font-size:10px;color:var(--d);">${u.suspended.type==='perm'?'영구정지':`${Math.ceil((u.suspended.until-Date.now())/86400000)}일 정지`}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="font-size:11px;color:var(--ts);">부관리자</span>
+        <label class="tsw"><input type="checkbox" ${u.isSubAdmin?'checked':''} ${CU.isAdmin?'':'disabled'} onchange="setSubAdmin('${u.id}',this.checked)"><span class="tsl"></span></label>
+      </div>
+    </div>`).join('');
+
+  const adRows=ads.length?ads.map(ad=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--b);">
+      ${ad.type==='banner'&&ad.image?`<img src="${resolveImg(ad.image)}" style="width:60px;height:30px;object-fit:cover;border-radius:5px;flex-shrink:0;">`:'<div style="font-size:18px;flex-shrink:0;">📢</div>'}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;color:var(--p);font-weight:700;">${ad.type==='banner'?'🖼️ 배너 광고':'📝 텍스트 광고'}</div>
+        ${ad.text?`<div style="font-size:11px;color:var(--t);line-height:1.4;word-break:break-all;">${esc(ad.text.substring(0,50))}${ad.text.length>50?'...':''}</div>`:''}
+        ${ad.link?`<div style="font-size:9px;color:var(--pl);margin-top:1px;word-break:break-all;">${esc(ad.link.substring(0,40))}</div>`:''}
+      </div>
+      <button onclick="delAdAndRefresh('${ad.id}')" style="background:none;border:none;color:var(--d);cursor:pointer;font-size:16px;flex-shrink:0;">🗑</button>
+    </div>`).join(''):'<div style="font-size:11px;color:var(--ts);">등록된 광고 없음</div>';
+
+  document.getElementById('prcontent').innerHTML=`
+    <div class="phdr" style="background:var(--d);"><button class="bkbtn" onclick="goProfile('admin')">‹</button><span class="phdr-t">관리자 설정</span></div>
+    <div class="asec">
+      <div class="acard" style="border-color:var(--pl);">
+        <div class="actitle" style="color:var(--p);">📢 광고 관리</div>
+        <div style="display:flex;gap:6px;margin-bottom:9px;">
+          <button id="adtype-text" class="btn-p" style="flex:1;font-size:11px;background:var(--p);" onclick="setAdType('text')">📝 텍스트 광고</button>
+          <button id="adtype-banner" class="btn-p" style="flex:1;font-size:11px;background:var(--ps);color:var(--p);" onclick="setAdType('banner')">🖼️ 배너 광고</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:11px;">
+          <div id="ad-banner-box" style="display:none;">
+            <input type="file" id="ad-banner-file" accept="image/*" style="display:none;" onchange="prevAdBanner(this)">
+            <div id="ad-banner-prev" onclick="document.getElementById('ad-banner-file').click()" style="width:100%;height:80px;border:2px dashed var(--pl);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;background:var(--ps);">
+              <div style="text-align:center;color:var(--ts)"><div style="font-size:22px;">🖼️</div><div style="font-size:10px;margin-top:3px;">가로형 배너 이미지 선택</div></div>
+            </div>
+          </div>
+          <textarea id="ad-text" placeholder="광고 문구 (배너는 선택사항)" style="width:100%;padding:8px 10px;border:1.5px solid var(--b);border-radius:8px;font-size:12px;resize:none;min-height:56px;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+          <input id="ad-link" type="url" placeholder="연결할 링크 (예: https://...)" style="width:100%;padding:8px 10px;border:1.5px solid var(--b);border-radius:8px;font-size:12px;">
+          <button class="btn-p" style="font-size:12px;" onclick="submitAd()">📢 광고 업로드</button>
+        </div>
+        <div style="border-top:1px solid var(--b);padding-top:8px;">${adRows}</div>
+      </div>
+      <div class="acard"><div class="actitle">⚙️ 이용자 목록 (${users.length}명)</div>${rows||'<div style="font-size:11px;color:var(--ts);">가입자 없음</div>'}</div>
+    </div>`;
+  curAdType='text'; adBannerDataURL=null;
+}
+let curAdType='text', adBannerDataURL=null;
+function setAdType(t){
+  curAdType=t;
+  document.getElementById('adtype-text').style.background = t==='text'?'var(--p)':'var(--ps)';
+  document.getElementById('adtype-text').style.color = t==='text'?'#fff':'var(--p)';
+  document.getElementById('adtype-banner').style.background = t==='banner'?'var(--p)':'var(--ps)';
+  document.getElementById('adtype-banner').style.color = t==='banner'?'#fff':'var(--p)';
+  document.getElementById('ad-banner-box').style.display = t==='banner'?'block':'none';
+}
+function prevAdBanner(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ adBannerDataURL=e.target.result; document.getElementById('ad-banner-prev').innerHTML=`<img src="${adBannerDataURL}" style="width:100%;height:80px;object-fit:cover;border-radius:7px;">`; };
+  r.readAsDataURL(f);
+}
+async function submitAd(){
+  const txt=document.getElementById('ad-text')?.value?.trim();
+  const link=document.getElementById('ad-link')?.value?.trim();
+  if(!link){toast('링크를 입력하세요.');return;}
+  if(curAdType==='banner'){
+    if(!adBannerDataURL){toast('배너 이미지를 선택하세요.');return;}
+    toast('배너 업로드 중...');
+    const imgUrl=await uploadImage(adBannerDataURL,'ads/'+gid()+'.jpg');
+    const ad={id:gid(),type:'banner',image:imgUrl,text:txt||'',link,createdAt:Date.now()};
+    await setAd(ad); adBannerDataURL=null;
+  } else {
+    if(!txt){toast('광고 문구를 입력하세요.');return;}
+    const ad={id:gid(),type:'text',text:txt,link,createdAt:Date.now()};
+    await setAd(ad);
+  }
+  toast('광고가 등록되었습니다!');
+  await openAdmin();
+}
+async function delAdAndRefresh(adId){
+  await delAd(adId); toast('광고가 삭제되었습니다.'); await openAdmin();
+}
+async function setSubAdmin(uid,val){
+  if(!CU.isAdmin){ toast('최고 관리자만 부관리자를 설정할 수 있습니다.'); return; }
+  const u=await getU(uid); if(!u) return;
+  u.isSubAdmin=val; await setU(u);
+  toast(val?`${uid} 부관리자 지정`:`${uid} 부관리자 해제`);
+}
+async function openSusMod(uid){ susTgt=uid; const u=await getU(uid); document.getElementById('sus-info').textContent=`대상: ${uid} (${u?u.nickname:''})`; OM('m-sus'); }
+async function doSuspend(type){
+  if(!susTgt) return; const u=await getU(susTgt); if(!u) return;
+  if(type==='perm'){u.suspended={type:'perm'};toast(`${susTgt} 영구정지`);}
+  else if(type==='days'){const d=parseInt(document.getElementById('sus-days').value);if(!d||d<1){toast('일수를 입력하세요');return;}u.suspended={type:'days',until:Date.now()+d*86400000};toast(`${susTgt} ${d}일 정지`);}
+  else{u.suspended=null;toast(`${susTgt} 정지 해제`);}
+  await setU(u); CM('m-sus'); await renderProfile(susTgt);
+}
+
+// ===== BADGE (admin only) =====
+async function openBadgeMod(uid){
+  document.getElementById('badge-uid').textContent=uid;
+  const u=await getU(uid);
+  document.getElementById('badge-inp').value=u?.badge||'';
+  OM('m-badge');
+}
+async function saveBadge(){
+  const uid=document.getElementById('badge-uid').textContent;
+  const b=document.getElementById('badge-inp').value.trim();
+  if(!b){toast('배지 내용을 입력하세요');return;}
+  const u=await getU(uid); if(!u) return;
+  u.badge=b; await setU(u); CM('m-badge'); await renderProfile(uid);
+  toast(`${uid}에게 인증배지를 부여했습니다.`);
+}
+async function removeBadge(){
+  const uid=document.getElementById('badge-uid').textContent;
+  const u=await getU(uid); if(!u) return;
+  delete u.badge; await setU(u); CM('m-badge'); await renderProfile(uid);
+  toast('인증배지를 제거했습니다.');
+}
+
+// ===== POST INFO (admin) =====
+async function showPInfo(pid){
+  const p=await getP(pid); if(!p) return;
+  const ts=tsToMs(p.createdAt);
+  document.getElementById('pinfo-cont').innerHTML=`
+    <div class="piitem"><div class="pilabel">⏰ 작성 시간</div><div class="pival">${fmtDateFull(ts)}</div></div>
+    <div class="piitem"><div class="pilabel">🌐 브라우저</div><div class="pival">${esc(p.browser||'알 수 없음')}</div></div>
+    <div class="piitem"><div class="pilabel">📡 IP (앞 2단락)</div><div class="pival">${esc(p.ip||'알 수 없음')}</div></div>
+    <div class="piitem"><div class="pilabel">👤 작성자</div><div class="pival">${esc(p.authorId)}</div></div>`;
+  OM('m-pinfo');
+}
+
+// ===== NOTIFICATIONS =====
+function toggleNP(){
+  const p=document.getElementById('npanel'); p.classList.toggle('open');
+  if(p.classList.contains('open')) renderNP();
+}
+async function renderNP(){
+  const ns=getNs();
+  // mark all as read
+  if(ns.some(n=>n.u)){
+    CU.notifs=ns.map(n=>({...n,u:false}));
+    await setU(CU); updNBadge();
+  }
+  const el=document.getElementById('nlist');
+  if(!ns.length){
+    el.innerHTML='<div class="empty" style="padding:18px;"><div class="icon" style="font-size:26px;">🔔</div><p>새로운 알림이 없습니다</p></div>';return;
+  }
+  el.innerHTML=ns.map(n=>`
+    <div class="nitem ${n.u?'unread':''}">
+      <div class="nitem-icon">${n.icon||'🔔'}</div>
+      <div class="nitem-body"><div class="nitem-text">${n.text}</div><div class="nitem-time">${fmtDate(n.t)}</div></div>
+    </div>`).join('');
+}
+async function clearNotifs(){
+  CU.notifs=[];
+  await setU(CU); updNBadge(); renderNP();
+}
+
+// ===== UTILS =====
+function cc(el,cid){ const l=el.value.length; const e=document.getElementById(cid); if(!e)return; e.textContent=`${l} / 100`; e.className='ccount'+(l>90?' warn':''); }
+function arta(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
+// ===== EVENTS =====
+window.addEventListener('click',e=>{
+  if(e.target.classList.contains('moverlay')) CM(e.target.id);
+  if(!e.target.closest('.pmore')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+  if(!e.target.closest('#npanel')&&!e.target.closest('#nbtn')) document.getElementById('npanel').classList.remove('open');
+});
+
+// ===== INIT =====
+window.addEventListener('load', async ()=>{
+  // auth 화면은 항상 먼저 보여주고, 백그라운드에서 Firebase 초기화
+  showScr('auth');
+  document.getElementById('bnav').style.display='none';
+
+  // 백그라운드 초기화 (실패해도 로그인 화면 유지)
+  try { await getU('admin'); } catch(e){}
+  try {
+    const posts=await getAllPosts();
+    if(!posts.length){
+      await setP({id:gid(),authorId:'admin',content:'MIRAMIRA에 오신 것을 환영합니다! 💜\n게시물을 올려 사람들과 소통해보세요.',createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],browser:'server',ip:'000.000'});
+    }
+  } catch(e){}
+
+  // 자동 로그인 시도
+  try {
+    const saved=localStorage.getItem('mm_cur');
+    if(saved){
+      const u=await getU(saved);
+      if(u){ CU=u; await enterApp(); return; }
+      localStorage.removeItem('mm_cur');
+    }
+  } catch(e){ localStorage.removeItem('mm_cur'); }
+});
+
+// ===== EXPOSE to window (required for inline onclick in module script) =====
+Object.assign(window,{
+  switchTab,doLogin,doRegister,doLogout,
+  navTo,goProfile,
+  switchFeedTab,
+  openUpload,openPostM,openStoryM,prevStory,submitPost,submitStory,
+  viewStory,closeSTV,storySkip,deleteMyStory,
+  toggleCm,toggleDD,doLike,doDislike,
+  openRTMenu,openQRT,submitQRT,doRetweet,
+  editPost,delPost,hidePost,
+  submitCm,editCm,delCm,cmLike,cmDislike,cmRetweet,showCInfo,
+  doSearch,scrollToPost,searchHashtag,
+  renderProfile,doFollow,showFL,
+  openPE,prevPfp,savePE,
+  openAdmin,setSubAdmin,openSusMod,doSuspend,
+  submitAd,delAdAndRefresh,setAdType,prevAdBanner,
+  openBadgeMod,saveBadge,removeBadge,
+  showPInfo,
+  toggleNP,clearNotifs,
+  OM,CM,cc,arta
+});
+</script>
+</body>
+</html>
