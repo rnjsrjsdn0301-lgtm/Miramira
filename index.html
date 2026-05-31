@@ -382,7 +382,12 @@ input,textarea,button{font-family:'Noto Sans KR',sans-serif;}
       <div class="ig"><label>새 비밀번호</label><input id="pe-pw-new" type="password" class="einput" placeholder="새 비밀번호 (변경 시 입력)"></div>
       <div class="ig"><label>가상국가 활동명</label><input id="pe-nick" class="einput"></div>
       <div class="ig"><label>자기소개</label><textarea id="pe-bio" class="einput" rows="3" style="resize:none;"></textarea></div>
-      <div class="ig"><label>프로필 사진</label><input type="file" id="pe-pfp" accept="image/*" onchange="prevPfp(this)"><div id="pe-pfp-prev" style="margin-top:6px;"></div></div>
+      <div class="ig">
+        <label>프로필 사진</label>
+        <input type="file" id="pe-pfp" accept="image/*" onchange="prevPfp(this)">
+        <div id="pe-pfp-prev" style="margin-top:6px;"></div>
+        <button type="button" onclick="resetPfp()" style="margin-top:5px;background:none;border:1.5px solid var(--d);color:var(--d);padding:4px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">🗑 사진 초기화</button>
+      </div>
     </div>
     <div class="aerr" id="pe-err"></div>
     <div class="macts"><button class="btn-sec" onclick="CM('m-pedit')">취소</button><button class="btn-p" onclick="savePE()">저장</button></div>
@@ -630,7 +635,7 @@ let curScreen = 'main';
 let editPid = null, editCid = null;
 let susTgt = null;
 let svStories = [], svIdx = 0, svTimer = null;
-let storyDataURL = null, newPfpURL = null, adImgDataURL = null;
+let storyDataURL = null, newPfpURL = null, adImgDataURL = null, newPfpReset = false;
 let feedTab = 'follow'; // 'follow' | 'all'
 let feedUnsub = null;
 let isRendering = false; // guard against snapshot loop
@@ -806,7 +811,10 @@ async function enterApp(){
   document.querySelectorAll('.nnbtn').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-home').classList.add('active');
   updNBadge();
-  try{ await renderFeed(); }catch(e){ console.error('renderFeed error:',e); }
+  // 해시 있으면 해당 화면으로, 없으면 메인
+  const hash=getHash();
+  if(hash && hash!=='home') await routeHash();
+  else { setHash('home'); await renderFeed(); }
   startFeedListener();
 }
 function startFeedListener(){
@@ -826,14 +834,27 @@ function startFeedListener(){
     );
   } catch(e) {}
 }
+// ===== HASH ROUTING =====
+function setHash(hash){ history.pushState(null, '', '#'+hash); }
+function getHash(){ return location.hash.replace('#',''); }
+window.addEventListener('popstate', ()=>{ if(CU) routeHash(); });
+async function routeHash(){
+  const hash = getHash();
+  if(!hash || hash==='home'){ await navTo('main'); return; }
+  if(hash==='search'){ await navTo('search'); return; }
+  if(hash==='profile'){ await navTo('profile'); return; }
+  if(hash.startsWith('profile/')){ const uid=hash.slice(8); await goProfile(uid); return; }
+  if(hash.startsWith('post/')){ const pid=hash.slice(5); await scrollToPost(pid); return; }
+}
 async function navTo(n){
   document.querySelectorAll('.nnbtn:not(.upbtn)').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-'+n)?.classList.add('active');
-  if(n==='main'){ showScr('main'); await renderFeed(); }
-  else if(n==='search'){ showScr('search'); }
-  else if(n==='profile'){ showScr('profile'); await renderProfile(CU.id); }
+  if(n==='main'){ setHash('home'); showScr('main'); await renderFeed(); }
+  else if(n==='search'){ setHash('search'); showScr('search'); }
+  else if(n==='profile'){ setHash('profile/'+CU.id); showScr('profile'); await renderProfile(CU.id); }
 }
 async function goProfile(uid){
+  setHash('profile/'+uid);
   showScr('profile');
   document.querySelectorAll('.nnbtn:not(.upbtn)').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-profile')?.classList.add('active');
@@ -987,7 +1008,16 @@ async function buildPost(post){
   let acts='';
   if(!post.adminDeleted && !post.hiddenByAdmin){
     const rtActive = retweets.includes(CU.id)||post.quotedBy?.includes(CU.id);
-    if(isOwn||sus){
+    if(sus){
+      // 정지된 계정: 읽기만
+      acts=`<div class="pacts">
+        <button class="abt" onclick="toggleCm('${post.id}')">💬 ${comments.length}</button>
+        <span class="abt" style="cursor:default;">🔁 ${retweets.length}</span>
+        <span class="abt" style="cursor:default;">👍 ${likes.length}</span>
+        <span class="abt" style="cursor:default;">👎 ${dislikes.length}</span>
+      </div>`;
+    } else if(isOwn){
+      // 자기 글: 댓글만 가능, 리트윗/좋아요/싫어요는 숫자만 표시
       acts=`<div class="pacts">
         <button class="abt" onclick="toggleCm('${post.id}')">💬 ${comments.length}</button>
         <span class="abt" style="cursor:default;">🔁 ${retweets.length}</span>
@@ -1482,6 +1512,7 @@ async function doSearch(){
 function scrollToPost(pid){
   navTo('main');
   setTimeout(async()=>{
+    setHash('post/'+pid);
     const el=document.getElementById('pc-'+pid);
     if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='2px solid var(--p)'; setTimeout(()=>el.style.outline='',1800); }
     else toast('원본 게시물을 찾을 수 없습니다.');
@@ -1573,11 +1604,12 @@ async function showFL(uid,type){
 
 // ===== PROFILE EDIT =====
 function openPE(){
+  newPfpURL=null; newPfpReset=false;
   document.getElementById('pe-id-new').value='';
   document.getElementById('pe-pw-new').value='';
   document.getElementById('pe-nick').value=CU.nickname||'';
   document.getElementById('pe-bio').value=CU.bio||'';
-  document.getElementById('pe-pfp-prev').innerHTML=CU.pfp?`<img src="${CU.pfp}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;">`:'';
+  document.getElementById('pe-pfp-prev').innerHTML=CU.pfp?`<img src="${resolveImg(CU.pfp)}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;">`:'';
   document.getElementById('pe-err').textContent='';
   OM('m-pedit');
 }
@@ -1586,6 +1618,13 @@ function prevPfp(inp){
   const r=new FileReader();
   r.onload=e=>{ newPfpURL=e.target.result; document.getElementById('pe-pfp-prev').innerHTML=`<img src="${newPfpURL}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;">`; };
   r.readAsDataURL(f);
+}
+function resetPfp(){
+  newPfpURL=null;
+  newPfpReset=true;
+  document.getElementById('pe-pfp-prev').innerHTML=
+    `<span style="font-size:11px;color:var(--d);">✔ 저장 시 사진이 삭제됩니다</span>`;
+  document.getElementById('pe-pfp').value='';
 }
 async function savePE(){
   const errEl=document.getElementById('pe-err'); errEl.textContent='';
@@ -1653,7 +1692,8 @@ async function savePE(){
 
   if(newPw) CU.password=newPw;
   CU.nickname=newNick; CU.bio=newBio;
-  if(newPfpURL){
+  if(newPfpReset){ CU.pfp=''; newPfpReset=false; newPfpURL=null; }
+  else if(newPfpURL){
     toast('프로필 사진 업로드 중...');
     CU.pfp=await uploadImage(newPfpURL,'pfp/'+CU.id+'.jpg'); newPfpURL=null;
   }
@@ -1664,6 +1704,7 @@ async function savePE(){
 async function openAdmin(){
   const allUsers=await getAllUsers();
   const users=allUsers;
+  const ads=await getAllAds();
   const rows=users.map(u=>`
     <div class="uarow">
       <div class="uainfo">
@@ -1940,7 +1981,7 @@ Object.assign(window,{
   submitCm,editCm,delCm,cmLike,cmDislike,cmRetweet,showCInfo,
   doSearch,scrollToPost,searchHashtag,
   renderProfile,doFollow,showFL,
-  openPE,prevPfp,savePE,
+  openPE,prevPfp,resetPfp,savePE,
   openAdmin,setSubAdmin,openSusMod,doSuspend,doDeleteAccount,
   submitAd,delAdAndRefresh,setAdType,prevAdBanner,
   openBadgeMod,saveBadge,removeBadge,
