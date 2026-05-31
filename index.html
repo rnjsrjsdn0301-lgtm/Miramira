@@ -294,6 +294,15 @@ input,textarea,button{font-family:'Noto Sans KR',sans-serif;}
   <div id="prcontent"></div>
 </div>
 
+<!-- 게시물 상세 화면 -->
+<div id="post-detail-screen" class="screen" style="overflow-y:auto;padding-bottom:58px;">
+  <div class="phdr" style="background:var(--p);">
+    <button class="bkbtn" onclick="history.back()">‹</button>
+    <span class="phdr-t">게시물</span>
+  </div>
+  <div id="pd-content" style="padding:7px;"></div>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bnav" id="bnav" style="display:none;">
   <button class="nnbtn active" id="nav-home" onclick="navTo('main')">
@@ -482,7 +491,21 @@ function getBadgeHtml(u) {
   if(u.badge) return `<span class="ubadge">${esc(u.badge)}</span>`;
   return '';
 }
-// Firestore 쓰기가 멈추지 않도록 타임아웃 래퍼
+// 게시물 순번 카운터 (1,2,3... URL용)
+async function nextPostNum(){
+  try{
+    const ref=doc(db,'meta','postCounter');
+    const s=await Promise.race([getDoc(ref), new Promise((_,r)=>setTimeout(()=>r('timeout'),3000))]);
+    const n=(s.exists?.()?s.data().n:0)+1;
+    await withTimeout(setDoc(ref,{n}));
+    localStorage.setItem('mm_postCounter',n);
+    return n;
+  }catch(e){
+    const n=(parseInt(localStorage.getItem('mm_postCounter')||'0'))+1;
+    localStorage.setItem('mm_postCounter',n);
+    return n;
+  }
+}
 function withTimeout(promise, ms=4000){
   return Promise.race([promise, new Promise(res=>setTimeout(res, ms))]);
 }
@@ -834,17 +857,45 @@ function startFeedListener(){
     );
   } catch(e) {}
 }
+// ===== POST DETAIL VIEW =====
+async function viewPost(pid){
+  const p=await getP(pid);
+  if(!p){ toast('게시물을 찾을 수 없습니다.'); return; }
+  const num=p.postNum;
+  setHash('post/'+(num||pid));
+  showScr('post-detail');
+  document.querySelectorAll('.nnbtn:not(.upbtn)').forEach(b=>b.classList.remove('active'));
+  const content=document.getElementById('pd-content');
+  content.innerHTML='<div style="text-align:center;padding:20px;"><div class="spin" style="width:20px;height:20px;border-width:2px;display:inline-block;"></div></div>';
+  const html=await buildPost(p);
+  content.innerHTML=html;
+  // 댓글 항상 열기
+  const cm=document.getElementById('cm-'+pid);
+  if(cm){ cm.style.display='flex'; cm.style.flexDirection='column'; }
+}
+
 // ===== HASH ROUTING =====
 function setHash(hash){ history.pushState(null, '', '#'+hash); }
 function getHash(){ return location.hash.replace('#',''); }
 window.addEventListener('popstate', ()=>{ if(CU) routeHash(); });
 async function routeHash(){
-  const hash = getHash();
-  if(!hash || hash==='home'){ await navTo('main'); return; }
+  const hash=getHash();
+  if(!hash||hash==='home'){ await navTo('main'); return; }
   if(hash==='search'){ await navTo('search'); return; }
   if(hash==='profile'){ await navTo('profile'); return; }
   if(hash.startsWith('profile/')){ const uid=hash.slice(8); await goProfile(uid); return; }
-  if(hash.startsWith('post/')){ const pid=hash.slice(5); await scrollToPost(pid); return; }
+  if(hash.startsWith('post/')){
+    const val=hash.slice(5);
+    const num=parseInt(val);
+    if(!isNaN(num)){
+      // 순번으로 게시물 찾기
+      const allP=await getAllPosts();
+      const p=allP.find(p=>p.postNum===num);
+      if(p){ await viewPost(p.id); return; }
+    }
+    // fallback: pid로 직접 찾기
+    await viewPost(val); return;
+  }
 }
 async function navTo(n){
   document.querySelectorAll('.nnbtn:not(.upbtn)').forEach(b=>b.classList.remove('active'));
@@ -1002,7 +1053,7 @@ async function buildPost(post){
   let cont='';
   if(post.adminDeleted) cont=`<div class="pcont adel">🚫 운영약관을 위반한 게시물이 삭제되었습니다</div>`;
   else if(post.hiddenByAdmin) cont=`<div class="pcont adel">🔴 이용방침을 위반하여 삭제된 게시글입니다</div>`;
-  else if(post.content) cont=`<div class="pcont" style="white-space:pre-wrap;">${renderText(post.content)}</div>`;
+  else if(post.content) cont=`<div class="pcont" style="white-space:pre-wrap;cursor:pointer;" onclick="viewPost('${post.id}')">${renderText(post.content)}</div>`;
 
   // 액션 버튼 (트위터 스타일)
   let acts='';
@@ -1040,7 +1091,7 @@ async function buildPost(post){
       <div class="pav" onclick="goProfile('${id}')">${pfp}</div>
       <div class="pmeta">
         <div class="puid" onclick="goProfile('${id}')">${esc(id)}${badge}</div>
-        <div class="pdate">${fmtDate(ts)}${post.edited?' · 수정됨':''}</div>
+        <div class="pdate" style="cursor:pointer;" onclick="viewPost('${post.id}')">${fmtDate(ts)}${post.edited?' · 수정됨':''}</div>
       </div>
       ${more}
     </div>
@@ -1117,27 +1168,37 @@ async function refreshPost(pid){
   el.outerHTML=await buildPost(p);
   if(wasOpen){const cm=document.getElementById('cm-'+pid);if(cm){cm.style.display='flex';cm.style.flexDirection='column';}}
 }
-// 게시물 액션바만 부분 갱신 (좋아요/싫어요/리트윗) - 깜빡임 없음
-async function refreshActions(pid){
-  const p=await getP(pid); if(!p) return;
+// 게시물 액션바만 부분 갱신 - p를 직접 받아 Firestore 재조회 없이 즉시 반영
+async function refreshActions(pid, p=null){
+  if(!p) p=await getP(pid);
+  if(!p) return;
   const el=document.getElementById('pc-'+pid); if(!el) return;
   const pacts=el.querySelector('.pacts'); if(!pacts) return;
   const likes=p.likes||[], dislikes=p.dislikes||[], retweets=p.retweets||[], comments=p.comments||[];
   const rtActive=retweets.includes(CU.id)||p.quotedBy?.includes(CU.id);
-  pacts.innerHTML=`
-    <button class="abt" onclick="toggleCm('${pid}')">💬 ${comments.length}</button>
-    <button class="abt${rtActive?' rk':''}" onclick="openRTMenu('${pid}')">🔁 ${retweets.length}</button>
-    <button class="abt${likes.includes(CU.id)?' lk':''}" onclick="doLike('${pid}')">👍 ${likes.length}</button>
-    <button class="abt${dislikes.includes(CU.id)?' dk':''}" onclick="doDislike('${pid}')">👎 ${dislikes.length}</button>`;
+  const isOwn=CU.id===p.authorId;
+  if(isOwn){
+    pacts.innerHTML=`
+      <button class="abt" onclick="toggleCm('${pid}')">💬 ${comments.length}</button>
+      <span class="abt" style="cursor:default;">🔁 ${retweets.length}</span>
+      <span class="abt" style="cursor:default;">👍 ${likes.length}</span>
+      <span class="abt" style="cursor:default;">👎 ${dislikes.length}</span>`;
+  } else {
+    pacts.innerHTML=`
+      <button class="abt" onclick="toggleCm('${pid}')">💬 ${comments.length}</button>
+      <button class="abt${rtActive?' rk':''}" onclick="openRTMenu('${pid}')">🔁 ${retweets.length}</button>
+      <button class="abt${likes.includes(CU.id)?' lk':''}" onclick="doLike('${pid}')">👍 ${likes.length}</button>
+      <button class="abt${dislikes.includes(CU.id)?' dk':''}" onclick="doDislike('${pid}')">👎 ${dislikes.length}</button>`;
+  }
 }
-// 댓글 영역만 부분 갱신 - 입력창/스크롤 유지
-async function refreshComments(pid){
-  const p=await getP(pid); if(!p) return;
+// 댓글 영역만 부분 갱신 - 입력창 유지, p를 직접 받아 즉시 반영
+async function refreshComments(pid, p=null){
+  if(!p) p=await getP(pid);
+  if(!p) return;
   const cm=document.getElementById('cm-'+pid); if(!cm) return;
   const wasOpen=cm.style.display!=='none';
   const comments=p.comments||[];
   const sus=isSus(CU);
-  // 입력창 내용 보존
   const oldInput=document.getElementById('ci-'+pid);
   const savedText=oldInput?oldInput.value:'';
   const cHtmls=(await Promise.all(comments.map(c=>buildComment(pid,c)))).join('');
@@ -1145,14 +1206,11 @@ async function refreshComments(pid){
   cm.innerHTML=cHtmls+inp;
   cm.style.display=wasOpen?'flex':'none';
   cm.style.flexDirection='column';
-  // 댓글 카운트 버튼 텍스트도 갱신
   const tcbtn=cm.nextElementSibling;
   if(tcbtn&&tcbtn.classList.contains('tcbtn')) tcbtn.textContent=`💬 댓글 ${comments.length}개${comments.length?' 보기/숨기기':''}`;
-  // 액션바 댓글 수도 갱신
   const el=document.getElementById('pc-'+pid);
   const firstAbt=el?.querySelector('.pacts .abt');
   if(firstAbt) firstAbt.innerHTML=`💬 ${comments.length}`;
-  // 입력창 복원
   const newInput=document.getElementById('ci-'+pid);
   if(newInput&&savedText){ newInput.value=savedText; arta(newInput); }
 }
@@ -1169,7 +1227,7 @@ async function doLike(pid){
   else{ p.likes.push(CU.id); p.dislikes=p.dislikes.filter(x=>x!==CU.id); }
   await setP(p);
   if(!had&&p.authorId!==CU.id) await pushN(p.authorId,'👍',`<strong>${CU.id}</strong>님이 회원님의 게시물을 좋아합니다.`);
-  await refreshActions(pid);
+  await refreshActions(pid, p);
 }
 async function doDislike(pid){
   const p=await getP(pid); if(!p) return;
@@ -1179,7 +1237,7 @@ async function doDislike(pid){
   else{ p.dislikes.push(CU.id); p.likes=p.likes.filter(x=>x!==CU.id); }
   await setP(p);
   if(!had&&p.authorId!==CU.id) await pushN(p.authorId,'👎',`<strong>${CU.id}</strong>님이 회원님의 게시물을 싫어합니다.`);
-  await refreshActions(pid);
+  await refreshActions(pid, p);
 }
 // 리트윗 메뉴: 바로 리트윗 or 인용 리트윗
 function openRTMenu(pid){
@@ -1219,7 +1277,8 @@ async function submitQRT(){
   // 인용 리트윗: 내 글 + quoteOf 필드
   const mentions=[...new Set((txt.match(/@([a-zA-Z0-9_]{1,20})/g)||[]).map(m=>m.slice(1)))];
   const hashtags=[...new Set((txt.match(/#([\w가-힣]{1,30})/g)||[]).map(h=>h.slice(1)))];
-  const rp={id:gid(),authorId:CU.id,content:txt||'',createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],quoteOf:pid,browser:getBrowser(),mentions,hashtags};
+  const postNum=await nextPostNum();
+  const rp={id:gid(),authorId:CU.id,content:txt||'',createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],quoteOf:pid,browser:getBrowser(),mentions,hashtags,postNum};
   // 원본 retweets 배열에도 추가 (카운트용)
   p.retweets=p.retweets||[];
   if(!p.retweets.includes(CU.id)) p.retweets.push(CU.id);
@@ -1312,7 +1371,7 @@ async function submitCm(pid){
   if(editCid){
     const c=p.comments.find(c=>c.id===editCid);
     if(c){c.content=txt;c.edited=true;}
-    await setP(p); editCid=null; inp.value=''; await refreshComments(pid); toast('댓글이 수정되었습니다.'); return;
+    await setP(p); editCid=null; inp.value=''; await refreshComments(pid,p); toast('댓글이 수정되었습니다.'); return;
   }
   const cm={id:gid(),authorId:CU.id,content:txt,createdAt:Date.now(),likes:[],dislikes:[],retweets:[],browser:getBrowser()};
   p.comments.push(cm); await setP(p);
@@ -1324,7 +1383,7 @@ async function submitCm(pid){
     const mu=await getU(uid);
     if(mu) await pushN(uid,'📣',`<strong>${CU.id}</strong>님이 댓글에서 회원님을 언급했습니다.`);
   }
-  inp.value=''; await refreshComments(pid);
+  inp.value=''; await refreshComments(pid,p);
 }
 async function editCm(pid,cid){
   const p=await getP(pid); const c=p?.comments?.find(c=>c.id===cid); if(!c) return;
@@ -1336,7 +1395,7 @@ async function delCm(pid,cid,isAd){
   const p=await getP(pid); if(!p) return;
   if(isAd){const c=p.comments.find(c=>c.id===cid);if(c){c.adminDeleted=true;c.content='[관리자 삭제]';}}
   else p.comments=p.comments.filter(c=>c.id!==cid);
-  await setP(p); await refreshComments(pid);
+  await setP(p); await refreshComments(pid,p);
 }
 async function cmLike(pid,cid){
   const p=await getP(pid); if(!p) return;
@@ -1344,7 +1403,7 @@ async function cmLike(pid,cid){
   c.likes=c.likes||[]; c.dislikes=c.dislikes||[];
   if(c.likes.includes(CU.id)) c.likes=c.likes.filter(x=>x!==CU.id);
   else{c.likes.push(CU.id);c.dislikes=c.dislikes.filter(x=>x!==CU.id);}
-  await setP(p); await refreshComments(pid);
+  await setP(p); await refreshComments(pid,p);
 }
 async function cmDislike(pid,cid){
   const p=await getP(pid); if(!p) return;
@@ -1352,7 +1411,7 @@ async function cmDislike(pid,cid){
   c.dislikes=c.dislikes||[]; c.likes=c.likes||[];
   if(c.dislikes.includes(CU.id)) c.dislikes=c.dislikes.filter(x=>x!==CU.id);
   else{c.dislikes.push(CU.id);c.likes=c.likes.filter(x=>x!==CU.id);}
-  await setP(p); await refreshComments(pid);
+  await setP(p); await refreshComments(pid,p);
 }
 
 // ===== UPLOAD =====
@@ -1382,7 +1441,8 @@ async function submitPost(){
   // 멘션/해시태그 추출
   const mentions=[...new Set((txt.match(/@([a-zA-Z0-9_]{1,20})/g)||[]).map(m=>m.slice(1)))];
   const hashtags=[...new Set((txt.match(/#([\w가-힣]{1,30})/g)||[]).map(h=>h.slice(1)))];
-  const p={id:gid(),authorId:CU.id,content:txt,createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],browser:getBrowser(),mentions,hashtags};
+  const postNum=await nextPostNum();
+  const p={id:gid(),authorId:CU.id,content:txt,createdAt:Date.now(),likes:[],dislikes:[],retweets:[],comments:[],browser:getBrowser(),mentions,hashtags,postNum};
   await setP(p); CM('m-post');
   // 팔로워에게 알림
   for(const fid of (CU.following||[])) await pushN(fid,'📝',`<strong>${CU.id}</strong>님이 새 게시물을 올렸습니다.`);
@@ -1509,15 +1569,7 @@ async function doSearch(){
   }
   res.innerHTML=h;
 }
-function scrollToPost(pid){
-  navTo('main');
-  setTimeout(async()=>{
-    setHash('post/'+pid);
-    const el=document.getElementById('pc-'+pid);
-    if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='2px solid var(--p)'; setTimeout(()=>el.style.outline='',1800); }
-    else toast('원본 게시물을 찾을 수 없습니다.');
-  },300);
-}
+function scrollToPost(pid){ viewPost(pid); }
 
 // ===== PROFILE =====
 async function renderProfile(uid){
@@ -1979,7 +2031,7 @@ Object.assign(window,{
   openRTMenu,openQRT,submitQRT,doRetweet,
   editPost,delPost,hidePost,
   submitCm,editCm,delCm,cmLike,cmDislike,cmRetweet,showCInfo,
-  doSearch,scrollToPost,searchHashtag,
+  doSearch,scrollToPost,searchHashtag,viewPost,
   renderProfile,doFollow,showFL,
   openPE,prevPfp,resetPfp,savePE,
   openAdmin,setSubAdmin,openSusMod,doSuspend,doDeleteAccount,
